@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 
 class RecipeViewModel(private val recipeRepository: RecipeRepository) : ViewModel() {
     val readAllData: LiveData<List<Recipe>> = recipeRepository.readAllData
+
     var recipeName by mutableStateOf("")
         private set
     var recipeInstructions by mutableStateOf("")
@@ -72,6 +73,13 @@ class RecipeViewModel(private val recipeRepository: RecipeRepository) : ViewMode
         Log.d("RecipeViewModel", "Recipe is valid: $isValid")
         return isValid
     }
+
+    fun getRecipesByCategory(categoryId: Int): LiveData<List<Recipe>> {
+        return recipeRepository.getRecipesByCategory(categoryId)
+    }
+    fun getRecipesByUser(userId: Long): LiveData<List<Recipe>> {
+        return recipeRepository.getRecipesByUser(userId)
+    }
     fun addRecipe(authorId: Long) {
 
         val newRecipe = Recipe(
@@ -101,6 +109,9 @@ class RecipeViewModel(private val recipeRepository: RecipeRepository) : ViewMode
         recipeAuthorId = 1
         recipeImageUri = null
         recipeCategoryId = 1
+    }
+    fun getAllRecipes(): LiveData<List<Recipe>> {
+        return recipeRepository.readAllData
     }
     class RecipeViewModelFactory(private val repository: RecipeRepository) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {

@@ -15,6 +15,17 @@ class UserViewModel(application: Application) : AndroidViewModel(application) {
         SharedPreferencesUtil.getUserId(application).takeIf { it != -1L }
     )
 
+    private val _currentUser = MutableLiveData<User>()
+    val currentUser: LiveData<User> get() = _currentUser
+
+    init {
+        currentUserId.observeForever { userId ->
+            viewModelScope.launch {
+                _currentUser.value = userId?.let { getUserById(it) }
+            }
+        }
+    }
+
     suspend fun addUser(user: User): Boolean {
         return try {
             repository.addUser(user)

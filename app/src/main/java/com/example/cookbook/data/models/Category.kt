@@ -5,6 +5,17 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "categories")
 data class Category(
-    @PrimaryKey(autoGenerate = true) val categoryId: Long = 0,
+    @PrimaryKey val categoryId: Int,
     val name: String
 )
+
+enum class CategoryType(val id: Int, val displayName: String) {
+    BREAKFAST(1, "Breakfast"),
+    LUNCH(2, "Lunch"),
+    DINNER(3, "Dinner"),
+    DESSERT(4, "Dessert");
+
+    companion object {
+        fun fromId(id: Int): CategoryType? = values().find { it.id == id }
+    }
+}

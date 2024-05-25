@@ -1,24 +1,20 @@
 package com.example.cookbook.data
 
 import android.content.Context
+import android.util.Log
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.example.cookbook.data.dao.CategoryDao
-import com.example.cookbook.data.dao.CategoryRecipeDao
-import com.example.cookbook.data.dao.FavouriteDao
-import com.example.cookbook.data.dao.RecipeDao
-import com.example.cookbook.data.dao.UserDao
-import com.example.cookbook.data.dao.UserRecipeDao
-import com.example.cookbook.data.models.Category
-import com.example.cookbook.data.models.CategoryRecipe
-import com.example.cookbook.data.models.Favourite
-import com.example.cookbook.data.models.Recipe
-import com.example.cookbook.data.models.User
-import com.example.cookbook.data.models.UserRecipe
+import androidx.sqlite.db.SupportSQLiteDatabase
+import com.example.cookbook.data.dao.*
+import com.example.cookbook.data.models.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+
 @Database(
-    entities = [Category::class, Recipe::class, User::class, Favourite::class, CategoryRecipe::class, UserRecipe::class],
-    version = 7,
+    entities = [Category::class, Recipe::class, User::class, Favourite::class],
+    version = 11,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -26,30 +22,50 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun recipeDao(): RecipeDao
     abstract fun userDao(): UserDao
     abstract fun favouriteDao(): FavouriteDao
-    abstract fun categoryRecipeDao(): CategoryRecipeDao
-    abstract fun userRecipeDao(): UserRecipeDao
-
 
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
-        fun getDatabase(context: Context): AppDatabase {
-            val tempInstance = INSTANCE
-            if (tempInstance != null) {
-                return tempInstance
-            }
-            synchronized(this) {
+        fun getDatabase(context: Context, scope: CoroutineScope = CoroutineScope(SupervisorJob())): AppDatabase {
+            return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
                     "app_database"
                 )
                     .fallbackToDestructiveMigration()
+                    .addCallback(AppDatabaseCallback(scope))
                     .build()
                 INSTANCE = instance
-                return instance
+                instance
             }
+        }
+
+        private class AppDatabaseCallback(
+            private val scope: CoroutineScope
+        ) : RoomDatabase.Callback() {
+            override fun onCreate(db: SupportSQLiteDatabase) {
+                super.onCreate(db)
+                INSTANCE?.let { database ->
+                    scope.launch {
+                        populateDatabase(database.categoryDao())
+                    }
+                }
+            }
+        }
+
+        suspend fun populateDatabase(categoryDao: CategoryDao) {
+            Log.d("AppDatabase", "Populating database")
+            categoryDao.insertAll(
+                listOf(
+                    Category(1, "Breakfast"),
+                    Category(2, "Lunch"),
+                    Category(3, "Dinner"),
+                    Category(4, "Dessert")
+                )
+            )
+            Log.d("AppDatabase", "Database populated")
         }
     }
 }

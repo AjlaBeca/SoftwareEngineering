@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -28,12 +29,21 @@ import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.*
+import com.example.cookbook.data.viewmodels.RecipeViewModel
 
 @Composable
-fun ListScreen(navController: NavHostController, recipes: List<Recipe>) {
-
+fun ListScreen(navController: NavHostController, category: String?, recipeViewModel: RecipeViewModel) {
+    val categories = mapOf("Breakfast" to 1, "Lunch" to 2, "Dinner" to 3, "Dessert" to 4)
+    val categoryId = category?.let { categories[it] }
+    val allRecipes by (categoryId?.let { recipeViewModel.getRecipesByCategory(it) } ?: recipeViewModel.getAllRecipes()).observeAsState(listOf())
 
     var searchText by remember { mutableStateOf("") }
+
+    // Filter recipes based on search text
+    val filteredRecipes = allRecipes.filter { recipe ->
+        searchText.isEmpty() || recipe.name.contains(searchText, ignoreCase = true)
+    }
+
     Spacer(modifier = Modifier.height(16.dp))
     Column {
         OutlinedTextField(
@@ -61,13 +71,13 @@ fun ListScreen(navController: NavHostController, recipes: List<Recipe>) {
             contentPadding = PaddingValues(8.dp),
             modifier = Modifier.padding(horizontal = 8.dp)
         ) {
-            items(recipes.chunked(2)) { rowRecipes ->
+            items(filteredRecipes.chunked(2)) { rowRecipes ->
                 Row(
                     horizontalArrangement = Arrangement.Start,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     rowRecipes.forEachIndexed { index, recipe ->
-                        RecipeItem(recipe = recipe, inGrid = true,navController = navController, modifier = Modifier.weight(1f))
+                        RecipeItem(recipe = recipe, inGrid = true, navController = navController, modifier = Modifier.weight(1f))
                         if (index < rowRecipes.size - 1) {
                             Spacer(modifier = Modifier.width(16.dp))
                         }
@@ -81,7 +91,6 @@ fun ListScreen(navController: NavHostController, recipes: List<Recipe>) {
         }
     }
 }
-
 
 @Composable
 fun RecipeItem(recipe: Recipe, modifier: Modifier = Modifier, navController: NavHostController, inGrid: Boolean =false) {

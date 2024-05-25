@@ -1,12 +1,18 @@
 package com.example.cookbook.data.models
 
-import androidx.lifecycle.MutableLiveData
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 
 @Entity(
+    tableName = "recipes", // Ensure this matches your DAO queries
     foreignKeys = [
+        ForeignKey(
+            entity = Category::class,
+            parentColumns = ["categoryId"],
+            childColumns = ["categoryId"],
+            onDelete = ForeignKey.CASCADE
+        ),
         ForeignKey(
             entity = User::class,
             parentColumns = ["userId"],

@@ -1,6 +1,7 @@
 
 package com.example.cookbook
 
+import HomeScreen
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -93,9 +94,17 @@ fun MyApp(navController: NavHostController, userViewModel: UserViewModel, recipe
         NavHost(navController = navController, startDestination = startDestination, Modifier.padding(innerPadding)) {
             composable("login") { LoginScreen(navController, userViewModel) }
             composable("signup") { SignUpScreen(navController, userViewModel) }
-            composable("home") { HomeScreen(navController) }
-            composable("list") { ListScreen(navController, recipeList) }
-            composable("profile") { ProfileScreen(navController, userViewModel) }
+            composable("home") { HomeScreen(navController, userViewModel) }
+            composable("list") {
+                ListScreen(navController, "", recipeViewModel) // Checking "list" route
+            }
+            composable("listScreen/{category}") { backStackEntry ->
+                val category = backStackEntry.arguments?.getString("category")
+                if (category != null) {
+                    ListScreen(navController = navController, category = category, recipeViewModel)
+                }
+            }
+            composable("profile") { ProfileScreen(navController, userViewModel, recipeViewModel) }
             composable("add_screen") { AddScreen(navController, recipeViewModel, userViewModel, userViewModel.currentUserId.value) }
             composable("recipe_detail_screen/{recipeId}") { backStackEntry ->
                 val recipeId = backStackEntry.arguments?.getString("recipeId")?.toIntOrNull()

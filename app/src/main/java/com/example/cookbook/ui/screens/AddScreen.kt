@@ -23,9 +23,7 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -196,7 +194,7 @@ fun AddScreen(navController: NavHostController, recipeViewModel: RecipeViewModel
                         Log.d("AddScreen", "Add Recipe button clicked")
                         Log.d("AddScreen", "Is recipe valid: ${recipeViewModel.isValidRecipe()}")
 
-                        recipeViewModel.addRecipe(currentUserId?.toLong() ?: return@Button)
+                        val recipeId = recipeViewModel.addRecipe(currentUserId?.toLong() ?: return@Button)
                         navController.popBackStack()
                     },
                     enabled = recipeViewModel.isValidRecipe(),

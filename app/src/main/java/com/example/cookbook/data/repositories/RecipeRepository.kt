@@ -19,8 +19,14 @@ class RecipeRepository(application: Context) {
     }
 
     suspend fun addRecipe(recipe: Recipe) {
-        withContext(Dispatchers.IO) {
-            recipeDao.addRecipe(recipe)
-        }
+        return recipeDao.addRecipe(recipe)
+    }
+
+    fun getRecipesByCategory(categoryId: Int): LiveData<List<Recipe>> {
+        return recipeDao.readRecipesByCategory(categoryId)
+    }
+
+    fun getRecipesByUser(userId: Long): LiveData<List<Recipe>> {
+        return recipeDao.getRecipesByUser(userId)
     }
 }
