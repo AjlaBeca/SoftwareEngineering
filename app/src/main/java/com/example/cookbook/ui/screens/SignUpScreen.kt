@@ -23,16 +23,16 @@ import com.example.cookbook.R
 import com.example.cookbook.data.models.User
 import com.example.cookbook.data.viewmodels.UserViewModel
 import com.example.cookbook.ui.theme.*
+import com.example.cookbook.utils.SharedPreferencesUtil
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignUpScreen(navController: NavController, userViewModel: UserViewModel, modifier: Modifier = Modifier) {
-    val userViewModel: UserViewModel = viewModel()
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf("") }
-
 
     Box(
         modifier = modifier
@@ -137,13 +137,23 @@ fun SignUpScreen(navController: NavController, userViewModel: UserViewModel, mod
                                 errorMessage = "Please enter a valid email"
                             }
                             else -> {
-                                // Handle sign up
                                 errorMessage = ""
-                                val signUpSuccess = userViewModel.addUser(User(email = email, password = password, username = username, image = null))
-                                if (signUpSuccess) {
-                                    navController.navigate("home")
+                                val existingUser = userViewModel.getUserByEmail(email)
+                                if (existingUser == null) {
+                                    val signUpSuccess = userViewModel.addUser(User(email = email, password = password, username = username, image = null))
+                                    if (signUpSuccess) {
+                                        val user = userViewModel.getUserByEmail(email)
+                                        if (user != null) {
+                                            SharedPreferencesUtil.setLoggedIn(navController.context, true, user.userId)
+                                            navController.navigate("login")
+                                        } else {
+                                            errorMessage = "Failed to sign up. Please try again."
+                                        }
+                                    } else {
+                                        errorMessage = "Failed to sign up. Please try again."
+                                    }
                                 } else {
-                                    // Handle sign-up failure
+                                    errorMessage = "Email already in use. Please log in."
                                 }
                             }
                         }
@@ -155,7 +165,7 @@ fun SignUpScreen(navController: NavController, userViewModel: UserViewModel, mod
                     containerColor = Orange
                 )
             ) {
-                Text("Sign Up", color = Color.White) // Set text color here
+                Text("Sign Up", color = Color.White)
             }
 
             Spacer(modifier = Modifier.height(16.dp))

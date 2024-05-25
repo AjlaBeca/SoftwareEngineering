@@ -14,10 +14,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import com.example.cookbook.R
 import com.example.cookbook.data.viewmodels.UserViewModel
 import com.example.cookbook.ui.theme.*
+import com.example.cookbook.utils.SharedPreferencesUtil
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,8 +41,8 @@ fun LoginScreen(navController: NavController, userViewModel: UserViewModel, modi
             modifier = Modifier
                 .width(375.dp)
                 .padding(16.dp)
-        )
-        { Image(
+        ) {
+            Image(
                 painter = painterResource(id = R.drawable.cookbook_logo_white),
                 contentDescription = "CookBook Logo",
                 modifier = Modifier
@@ -95,6 +98,7 @@ fun LoginScreen(navController: NavController, userViewModel: UserViewModel, modi
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }
+
             Button(
                 onClick = {
                     when {
@@ -105,23 +109,31 @@ fun LoginScreen(navController: NavController, userViewModel: UserViewModel, modi
                             errorMessage = "Please enter a valid email"
                         }
                         else -> {
-                            // Handle login
-                            errorMessage = ""
-                            navController.navigate("list")
+                            userViewModel.viewModelScope.launch {
+                                val user = userViewModel.login(email, password)
+                                if (user != null) {
+                                    SharedPreferencesUtil.setLoggedIn(navController.context, true, user.userId)
+                                    navController.navigate("home")
+                                } else {
+                                    errorMessage = "Invalid email or password"
+                                }
+                            }
                         }
                     }
                 },
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
                 shape = MaterialTheme.shapes.medium,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Orange
-                )
+                colors = ButtonDefaults.buttonColors(containerColor = Orange)
             ) {
                 Text("Login", color = Color.White)
             }
             TextButton(
                 onClick = { navController.navigate("signup") },
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
                 colors = ButtonDefaults.textButtonColors(contentColor = White)
             ) {
                 Text("Don't have an account? Sign Up")

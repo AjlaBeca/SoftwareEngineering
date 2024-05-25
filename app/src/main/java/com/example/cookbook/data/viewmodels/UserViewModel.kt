@@ -1,37 +1,50 @@
-// UserViewModel.kt
 package com.example.cookbook.data.viewmodels
 
 import android.app.Application
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.cookbook.data.models.User
 import com.example.cookbook.data.repositories.UserRepository
-import kotlinx.coroutines.Dispatchers
+import com.example.cookbook.utils.SharedPreferencesUtil
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class UserViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: UserRepository = UserRepository(application)
     val readAllData: LiveData<List<User>> = repository.readAllData
+    val currentUserId: MutableLiveData<Long?> = MutableLiveData(
+        SharedPreferencesUtil.getUserId(application).takeIf { it != -1L }
+    )
 
     suspend fun addUser(user: User): Boolean {
         return try {
             repository.addUser(user)
-            true // Indicates successful addition
+            true
         } catch (e: Exception) {
-            false // Indicates failure
+            false
         }
     }
 
-
     suspend fun login(email: String, password: String): User? {
-        return repository.getUserByEmail(email)?.takeIf { it.password == password }
+        val user = repository.getUserByEmail(email)?.takeIf { it.password == password }
+        if (user != null) {
+            currentUserId.postValue(user.userId)
+            SharedPreferencesUtil.setLoggedIn(getApplication(), true, user.userId)
+        }
+        return user
     }
 
+    fun logout() {
+        currentUserId.postValue(null)
+        SharedPreferencesUtil.setLoggedIn(getApplication(), false)
+    }
+
+    suspend fun getUserByEmail(email: String): User? {
+        return repository.getUserByEmail(email)
+    }
+
+    suspend fun getUserById(userId: Long): User? {
+        return repository.getUserById(userId)
+    }
 
     class UserViewModelFactory(private val application: Application) : ViewModelProvider.AndroidViewModelFactory(application) {
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {

@@ -23,6 +23,12 @@ class UserRepository(application: Application) {
             userDao.addUser(user)
         }
     }
+    suspend fun getUserById(userId: Long): User? {
+        return withContext(Dispatchers.IO) {
+            userDao.getUserById(userId)
+        }
+    }
+
 
     suspend fun getUserByEmail(email: String): User? {
         return withContext(Dispatchers.IO) {

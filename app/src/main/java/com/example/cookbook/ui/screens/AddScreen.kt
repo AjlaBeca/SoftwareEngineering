@@ -1,23 +1,22 @@
 package com.example.cookbook.ui.screens
 
+import android.content.Context
+import android.content.Intent
+import android.graphics.Bitmap
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
@@ -28,148 +27,188 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
+import coil.size.Precision
+import coil.size.Scale
+import coil.size.Size
 import com.example.cookbook.data.viewmodels.RecipeViewModel
+import com.example.cookbook.data.viewmodels.UserViewModel
+import com.example.cookbook.ui.theme.*
 
 @Composable
-fun AddScreen(navController: NavHostController, recipeViewModel: RecipeViewModel) {
+fun AddScreen(navController: NavHostController, recipeViewModel: RecipeViewModel, userViewModel: UserViewModel, currentUserId: Long?) {
     val context = LocalContext.current
-    var imageUri by remember { mutableStateOf<Uri?>(null) }
     var name by remember { mutableStateOf("") }
     var instructions by remember { mutableStateOf("") }
     var ingredients by remember { mutableStateOf("") }
     var time by remember { mutableStateOf("") }
     var complexity by remember { mutableStateOf("Beginner") }
-    var servings by remember { mutableStateOf(1) }
+    var servings by remember { mutableIntStateOf(1) }
     var category by remember { mutableStateOf("Breakfast") }
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
+
+    if (complexity.isEmpty()) {
+        complexity = "Beginner"
+    }
+    if (category.isEmpty()) {
+        category = "Breakfast"
+    }
+
+    val currentUserId by userViewModel.currentUserId.observeAsState()
+    Log.d("AddScreen", "Current user ID: $currentUserId")
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
         onResult = { uri: Uri? ->
+            uri?.let {
+                context.contentResolver.takePersistableUriPermission(
+                    it,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            }
             imageUri = uri
+            saveImageUriToPreferences(context, uri)
             recipeViewModel.onImageUriChange(uri)
         }
     )
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
     ) {
-        OutlinedTextField(
-            value = name,
-            onValueChange = {
-                name = it
-                recipeViewModel.onRecipeNameChange(it)
-            },
-            label = { Text("Recipe Name") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = instructions,
-            onValueChange = {
-                instructions = it
-                recipeViewModel.onRecipeInstructionsChange(it)
-            },
-            label = { Text("Recipe Instructions") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = ingredients,
-            onValueChange = {
-                ingredients = it
-                recipeViewModel.onRecipeIngredientsChange(it)
-            },
-            label = { Text("Recipe Ingredients") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = time,
-            onValueChange = {
-                time = it
-                recipeViewModel.onRecipeTimeChange(it)
-            },
-            label = { Text("Recipe Time (e.g., 30 min, 1 hour)") },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Next
-            ),
-            keyboardActions = KeyboardActions(onNext = { FocusDirection.Down })
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        DropdownMenuComplexity(complexity) {
-            complexity = it
-            recipeViewModel.onRecipeComplexityChange(it)
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        DropdownMenuCategory(category) {
-            category = it
-            recipeViewModel.onRecipeCategoryIdChange(categoryToId(it))
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = servings.toString(),
-            onValueChange = {
-                servings = it.toIntOrNull() ?: 1
-                recipeViewModel.onRecipeServingsChange(it.toIntOrNull() ?: 1)
-            },
-            label = { Text("Servings") },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Done
-            )
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(onClick = { launcher.launch("image/*") }) {
-            Text("Select Image")
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        imageUri?.let {
-            Image(
-                painter = rememberAsyncImagePainter(it),
-                contentDescription = null,
-                modifier = Modifier
-                    .size(100.dp)
-                    .padding(4.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Button(
-            onClick = {
-                recipeViewModel.addRecipe()
-                navController.popBackStack()
-            },
-            enabled = recipeViewModel.isValidRecipe()
+        LazyColumn(
+            modifier = Modifier
+                .padding(32.dp)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Add Recipe")
+            item {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = {
+                            name = it
+                            recipeViewModel.onRecipeNameChange(it)
+                        },
+                        label = { Text("Recipe Name") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = instructions,
+                        onValueChange = {
+                            instructions = it
+                            recipeViewModel.onRecipeInstructionsChange(it)
+                        },
+                        label = { Text("Recipe Instructions") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = ingredients,
+                        onValueChange = {
+                            ingredients = it
+                            recipeViewModel.onRecipeIngredientsChange(it)
+                        },
+                        label = { Text("Recipe Ingredients") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = time,
+                        onValueChange = {
+                            time = it
+                            recipeViewModel.onRecipeTimeChange(it)
+                        },
+                        label = { Text("Recipe Time (e.g., 30 min, 1 hour)") },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Text,
+                            imeAction = ImeAction.Next
+                        ),
+                        keyboardActions = KeyboardActions(onNext = { FocusDirection.Down })
+                    )
+
+                    DropdownMenuComplexity(complexity) {
+                        complexity = it
+                        recipeViewModel.onRecipeComplexityChange(it)
+                    }
+
+                    DropdownMenuCategory(category) {
+                        category = it
+                        recipeViewModel.onRecipeCategoryIdChange(categoryToId(it))
+                    }
+
+                    OutlinedTextField(
+                        value = servings.toString(),
+                        onValueChange = {
+                            servings = it.toIntOrNull() ?: 1
+                            recipeViewModel.onRecipeServingsChange(it.toIntOrNull() ?: 1)
+                        },
+                        label = { Text("Servings") },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Done
+                        )
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedButton(
+                    onClick = { launcher.launch("image/*") },
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .padding(horizontal = 4.dp),
+                    shape = MaterialTheme.shapes.medium,
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = White),
+                ) {
+                    Text("Select Image")
+                }
+
+                // Image preview
+                imageUri?.let {
+                    val request = ImageRequest.Builder(context)
+                        .data(it)
+                        .bitmapConfig(Bitmap.Config.ARGB_8888)
+                        .size(Size.ORIGINAL)
+                        .scale(Scale.FILL)
+                        .precision(Precision.EXACT)
+                        .build()
+
+                    Image(
+                        painter = rememberAsyncImagePainter(request),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .padding(4.dp)
+                            .size(100.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Button to add recipe
+                Button(
+                    onClick = {
+                        Log.d("AddScreen", "Add Recipe button clicked")
+                        Log.d("AddScreen", "Is recipe valid: ${recipeViewModel.isValidRecipe()}")
+
+                        recipeViewModel.addRecipe(currentUserId?.toLong() ?: return@Button)
+                        navController.popBackStack()
+                    },
+                    enabled = recipeViewModel.isValidRecipe(),
+                    shape = MaterialTheme.shapes.medium,
+                    colors = ButtonDefaults.buttonColors(containerColor = Orange, contentColor = White),
+                ) {
+                    Text("Add Recipe")
+                }
+            }
         }
     }
 }
-
 @Composable
 fun DropdownMenuComplexity(selectedComplexity: String, onComplexitySelected: (String) -> Unit) {
     val complexityOptions = listOf("Beginner", "Intermediate", "Advanced", "Expert")
@@ -196,7 +235,7 @@ fun DropdownMenuComplexity(selectedComplexity: String, onComplexitySelected: (St
                 DropdownMenuItem(
                     text = { Text(complexity) },
                     onClick = {
-                        onComplexitySelected(complexity)
+                        onComplexitySelected(complexity) // Update the selected complexity
                         expanded = false
                     }
                 )
@@ -231,7 +270,7 @@ fun DropdownMenuCategory(selectedCategory: String, onCategorySelected: (String) 
                 DropdownMenuItem(
                     text = { Text(category) },
                     onClick = {
-                        onCategorySelected(category)
+                        onCategorySelected(category) // Update the selected category
                         expanded = false
                     }
                 )
@@ -250,8 +289,11 @@ fun categoryToId(category: String): Int {
     }
 }
 
-@Preview
-@Composable
-fun PreviewAddScreen() {
-    AddScreen(navController = rememberNavController(), recipeViewModel = viewModel())
+private fun saveImageUriToPreferences(context: Context, uri: Uri?) {
+    val sharedPref = context.getSharedPreferences("image_pref", Context.MODE_PRIVATE)
+    with(sharedPref.edit()) {
+        putString("image_uri", uri?.toString())
+        apply()
+    }
+    Log.d("SharedPreferences", "Saved URI: ${uri?.toString()}")
 }

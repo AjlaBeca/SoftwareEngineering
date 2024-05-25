@@ -1,6 +1,7 @@
 package com.example.cookbook.data.viewmodels
 
 import android.net.Uri
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -22,7 +23,7 @@ class RecipeViewModel(private val recipeRepository: RecipeRepository) : ViewMode
         private set
     var recipeTime by mutableStateOf("")
         private set
-    var recipeComplexity by mutableStateOf("")
+    var recipeComplexity by mutableStateOf("Beginner")
         private set
     var recipeServings by mutableStateOf(1)
         private set
@@ -66,10 +67,13 @@ class RecipeViewModel(private val recipeRepository: RecipeRepository) : ViewMode
     }
 
     fun isValidRecipe(): Boolean {
-        return recipeName.isNotBlank() && recipeInstructions.isNotBlank() && recipeIngredients.isNotBlank() && recipeTime.isNotBlank()
+        Log.d("RecipeViewModel", "Checking if recipe is valid...")
+        val isValid = recipeName.isNotBlank() && recipeInstructions.isNotBlank() && recipeIngredients.isNotBlank()
+        Log.d("RecipeViewModel", "Recipe is valid: $isValid")
+        return isValid
     }
+    fun addRecipe(authorId: Long) {
 
-    fun addRecipe() {
         val newRecipe = Recipe(
             name = recipeName,
             instructions = recipeInstructions,
@@ -77,7 +81,7 @@ class RecipeViewModel(private val recipeRepository: RecipeRepository) : ViewMode
             time = recipeTime,
             complexity = recipeComplexity,
             servings = recipeServings,
-            authorId = recipeAuthorId,
+            authorId = authorId,
             categoryId = recipeCategoryId,
             imagePath = recipeImageUri?.toString(),
         )
@@ -98,7 +102,6 @@ class RecipeViewModel(private val recipeRepository: RecipeRepository) : ViewMode
         recipeImageUri = null
         recipeCategoryId = 1
     }
-
     class RecipeViewModelFactory(private val repository: RecipeRepository) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(RecipeViewModel::class.java)) {

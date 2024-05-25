@@ -18,7 +18,7 @@ import com.example.cookbook.data.models.User
 import com.example.cookbook.data.models.UserRecipe
 @Database(
     entities = [Category::class, Recipe::class, User::class, Favourite::class, CategoryRecipe::class, UserRecipe::class],
-    version = 5,
+    version = 7,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

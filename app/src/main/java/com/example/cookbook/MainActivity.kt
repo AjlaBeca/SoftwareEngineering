@@ -1,6 +1,6 @@
+
 package com.example.cookbook
 
-import ListScreen
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -8,8 +8,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,52 +26,85 @@ import com.example.cookbook.data.models.Recipe
 import com.example.cookbook.data.repositories.RecipeRepository
 import com.example.cookbook.data.viewmodels.RecipeViewModel
 import com.example.cookbook.data.viewmodels.UserViewModel
-import com.example.cookbook.ui.screens.AddScreen
-import com.example.cookbook.ui.screens.HomeScreen
-import com.example.cookbook.ui.screens.LoginScreen
-import com.example.cookbook.ui.screens.ProfileScreen
-import com.example.cookbook.ui.screens.SignUpScreen
+import com.example.cookbook.ui.screens.*
 import com.example.cookbook.ui.theme.CookBookTheme
+import com.example.cookbook.utils.SharedPreferencesUtil
 
 class MainActivity : ComponentActivity() {
     private val TAG = "MainActivity"
-    private val userViewModel: UserViewModel by viewModels { UserViewModel.UserViewModelFactory(this.application) }
+    private val userViewModel: UserViewModel by viewModels { UserViewModel.UserViewModelFactory(application) }
     private val recipeViewModel: RecipeViewModel by viewModels {
-        RecipeViewModel.RecipeViewModelFactory(RecipeRepository(this.application))
+        RecipeViewModel.RecipeViewModelFactory(RecipeRepository(application))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate: UserViewModel initialized successfully")
         setContent {
-            val navController = rememberNavController()
-            CookBookTheme {
-                val recipeList by recipeViewModel.readAllData.observeAsState(initial = emptyList())
-                MyApp(navController, userViewModel, recipeViewModel, recipeList)
-            }
+            CookBookApp(userViewModel, recipeViewModel)
         }
     }
 }
 
 @Composable
-fun MyApp(navController: NavHostController, userViewModel: UserViewModel, recipeViewModel: RecipeViewModel, recipeList: List<Recipe>) {
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentDestination = navBackStackEntry?.destination
+fun CookBookApp(userViewModel: UserViewModel, recipeViewModel: RecipeViewModel) {
+    val navController = rememberNavController()
+    val recipeList by recipeViewModel.readAllData.observeAsState(initial = emptyList())
+
+    CookBookTheme {
+        val isLoggedIn = remember { mutableStateOf(SharedPreferencesUtil.isLoggedIn(navController.context)) }
+
+        // Restore the current user ID if logged in
+        LaunchedEffect(Unit) {
+            if (isLoggedIn.value) {
+                userViewModel.currentUserId.value = SharedPreferencesUtil.getUserId(navController.context).takeIf { it != -1L }
+            }
+        }
+
+        // Launch effect to handle navigation based on login status
+        LaunchedEffect(isLoggedIn.value) {
+            if (!isLoggedIn.value) {
+                navController.navigate("login") {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            }
+        }
+
+        MyApp(navController, userViewModel, recipeViewModel, recipeList, isLoggedIn.value)
+    }
+}
+
+@Composable
+fun MyApp(navController: NavHostController, userViewModel: UserViewModel, recipeViewModel: RecipeViewModel, recipeList: List<Recipe>, isLoggedIn: Boolean) {
+    val startDestination = if (isLoggedIn) "list" else "login"
 
     Scaffold(
         bottomBar = {
+            val currentDestination = navController.currentBackStackEntryAsState().value?.destination
             if (currentDestination?.route in listOf("home", "list", "profile")) {
                 BottomNavigationBar(navController)
             }
         }
     ) { innerPadding ->
-        NavHost(navController = navController, startDestination = "login", Modifier.padding(innerPadding)) {
+        NavHost(navController = navController, startDestination = startDestination, Modifier.padding(innerPadding)) {
             composable("login") { LoginScreen(navController, userViewModel) }
             composable("signup") { SignUpScreen(navController, userViewModel) }
             composable("home") { HomeScreen(navController) }
             composable("list") { ListScreen(navController, recipeList) }
-            composable("profile") { ProfileScreen(navController) }
-            composable("add_screen") { AddScreen(navController, recipeViewModel) }
+            composable("profile") { ProfileScreen(navController, userViewModel) }
+            composable("add_screen") { AddScreen(navController, recipeViewModel, userViewModel, userViewModel.currentUserId.value) }
+            composable("recipe_detail_screen/{recipeId}") { backStackEntry ->
+                val recipeId = backStackEntry.arguments?.getString("recipeId")?.toIntOrNull()
+                Log.d("Navigation", "Recipe ID: $recipeId")
+                val recipe = recipeList.find { it.recipeId == recipeId }
+                recipe?.let {
+                    RecipeDetailScreen(recipe, userViewModel)
+                }
+            }
         }
     }
 }
@@ -86,7 +119,7 @@ fun BottomNavigationBar(navController: NavHostController) {
             onClick = { navigateTo(navController, "home") }
         )
         NavigationBarItem(
-            icon = { Icon(Icons.Default.List, contentDescription = "List") },
+            icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = "List") },
             label = { Text("List") },
             selected = currentRoute(navController) == "list",
             onClick = { navigateTo(navController, "list") }
