@@ -8,18 +8,15 @@ import com.example.cookbook.data.models.Recipe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class RecipeRepository(application: Context) {
-    private val recipeDao: RecipeDao
-    val readAllData: LiveData<List<Recipe>>
-
-    init {
-        val database = AppDatabase.getDatabase(application)
-        recipeDao = database.recipeDao()
-        readAllData = recipeDao.readAllData()
-    }
+class RecipeRepository(private val recipeDao: RecipeDao) {
+    val readAllData: LiveData<List<Recipe>> = recipeDao.readAllData()
 
     suspend fun addRecipe(recipe: Recipe) {
-        return recipeDao.addRecipe(recipe)
+        recipeDao.addRecipe(recipe)
+    }
+
+    suspend fun deleteRecipe(recipeId: Int) {
+        recipeDao.deleteRecipe(recipeId)
     }
 
     fun getRecipesByCategory(categoryId: Int): LiveData<List<Recipe>> {

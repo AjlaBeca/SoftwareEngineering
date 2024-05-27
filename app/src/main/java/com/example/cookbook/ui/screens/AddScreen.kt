@@ -1,5 +1,6 @@
 package com.example.cookbook.ui.screens
 
+import RecipeViewModel
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -30,7 +31,6 @@ import coil.request.ImageRequest
 import coil.size.Precision
 import coil.size.Scale
 import coil.size.Size
-import com.example.cookbook.data.viewmodels.RecipeViewModel
 import com.example.cookbook.data.viewmodels.UserViewModel
 import com.example.cookbook.ui.theme.*
 
@@ -191,9 +191,6 @@ fun AddScreen(navController: NavHostController, recipeViewModel: RecipeViewModel
                 // Button to add recipe
                 Button(
                     onClick = {
-                        Log.d("AddScreen", "Add Recipe button clicked")
-                        Log.d("AddScreen", "Is recipe valid: ${recipeViewModel.isValidRecipe()}")
-
                         val recipeId = recipeViewModel.addRecipe(currentUserId?.toLong() ?: return@Button)
                         navController.popBackStack()
                     },

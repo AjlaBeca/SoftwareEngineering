@@ -12,13 +12,15 @@ interface RecipeDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun addRecipe(recipe: Recipe)
 
-    @Query("SELECT * FROM recipes ORDER BY recipeId DESC") // Match the table name
+    @Query("DELETE FROM recipes WHERE recipeId = :recipeId")
+    suspend fun deleteRecipe(recipeId: Int)
+
+    @Query("SELECT * FROM recipes ORDER BY recipeId DESC")
     fun readAllData(): LiveData<List<Recipe>>
 
-    @Query("SELECT * FROM recipes WHERE categoryId = :categoryId ORDER BY recipeId DESC") // Match the table name
+    @Query("SELECT * FROM recipes WHERE categoryId = :categoryId ORDER BY recipeId DESC")
     fun readRecipesByCategory(categoryId: Int): LiveData<List<Recipe>>
 
     @Query("SELECT * FROM recipes WHERE authorId = :userId")
     fun getRecipesByUser(userId: Long): LiveData<List<Recipe>>
-
 }

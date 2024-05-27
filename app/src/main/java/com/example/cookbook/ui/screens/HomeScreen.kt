@@ -23,7 +23,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import coil.compose.rememberImagePainter
 import com.example.cookbook.R
-import com.example.cookbook.data.viewmodels.RecipeViewModel
 import com.example.cookbook.data.viewmodels.UserViewModel
 
 @Composable

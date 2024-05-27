@@ -30,6 +30,11 @@ class UserRepository(application: Application) {
     }
 
 
+    suspend fun updateUser(user: User) {
+        userDao.updateUser(user)
+    }
+
+
     suspend fun getUserByEmail(email: String): User? {
         return withContext(Dispatchers.IO) {
             userDao.getUserByEmail(email)

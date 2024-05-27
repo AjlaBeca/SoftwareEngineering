@@ -9,5 +9,5 @@ data class User(
     var email: String,
     var password: String,
     var username: String,
-    val image: String?
+    val image: String? = null
 )

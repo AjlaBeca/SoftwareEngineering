@@ -90,6 +90,9 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
+
+    implementation ("androidx.compose.ui:ui-tooling:1.1.0-SNAPSHOT")
+
     //nav
     implementation (libs.androidx.activity.compose)
     implementation ("androidx.compose.material3:material3:1.2.1")

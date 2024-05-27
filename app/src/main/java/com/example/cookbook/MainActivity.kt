@@ -1,7 +1,7 @@
-
 package com.example.cookbook
 
 import HomeScreen
+import RecipeViewModel
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -24,8 +24,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.cookbook.data.models.Recipe
+import com.example.cookbook.data.repositories.FavouriteRepository
 import com.example.cookbook.data.repositories.RecipeRepository
-import com.example.cookbook.data.viewmodels.RecipeViewModel
 import com.example.cookbook.data.viewmodels.UserViewModel
 import com.example.cookbook.ui.screens.*
 import com.example.cookbook.ui.theme.CookBookTheme
@@ -35,7 +35,7 @@ class MainActivity : ComponentActivity() {
     private val TAG = "MainActivity"
     private val userViewModel: UserViewModel by viewModels { UserViewModel.UserViewModelFactory(application) }
     private val recipeViewModel: RecipeViewModel by viewModels {
-        RecipeViewModel.RecipeViewModelFactory(RecipeRepository(application))
+        RecipeViewModel.RecipeViewModelFactory(application)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,20 +51,19 @@ class MainActivity : ComponentActivity() {
 fun CookBookApp(userViewModel: UserViewModel, recipeViewModel: RecipeViewModel) {
     val navController = rememberNavController()
     val recipeList by recipeViewModel.readAllData.observeAsState(initial = emptyList())
+    val isLoggedIn by userViewModel.isLoggedIn.observeAsState(initial = false)
 
     CookBookTheme {
-        val isLoggedIn = remember { mutableStateOf(SharedPreferencesUtil.isLoggedIn(navController.context)) }
-
         // Restore the current user ID if logged in
         LaunchedEffect(Unit) {
-            if (isLoggedIn.value) {
+            if (isLoggedIn) {
                 userViewModel.currentUserId.value = SharedPreferencesUtil.getUserId(navController.context).takeIf { it != -1L }
             }
         }
 
         // Launch effect to handle navigation based on login status
-        LaunchedEffect(isLoggedIn.value) {
-            if (!isLoggedIn.value) {
+        LaunchedEffect(isLoggedIn) {
+            if (!isLoggedIn) {
                 navController.navigate("login") {
                     popUpTo(navController.graph.findStartDestination().id) {
                         saveState = true
@@ -75,7 +74,7 @@ fun CookBookApp(userViewModel: UserViewModel, recipeViewModel: RecipeViewModel) 
             }
         }
 
-        MyApp(navController, userViewModel, recipeViewModel, recipeList, isLoggedIn.value)
+        MyApp(navController, userViewModel, recipeViewModel, recipeList, isLoggedIn)
     }
 }
 
@@ -95,16 +94,19 @@ fun MyApp(navController: NavHostController, userViewModel: UserViewModel, recipe
             composable("login") { LoginScreen(navController, userViewModel) }
             composable("signup") { SignUpScreen(navController, userViewModel) }
             composable("home") { HomeScreen(navController, userViewModel) }
+            composable("editProfile") {
+                EditProfileScreen(navController, userViewModel, userViewModel.currentUserId.value ?: -1L)
+            }
             composable("list") {
-                ListScreen(navController, "", recipeViewModel) // Checking "list" route
+                ListScreen(navController, "", recipeViewModel, userViewModel.currentUserId.value ?: -1L)
             }
             composable("listScreen/{category}") { backStackEntry ->
                 val category = backStackEntry.arguments?.getString("category")
                 if (category != null) {
-                    ListScreen(navController = navController, category = category, recipeViewModel)
+                    ListScreen(navController = navController, category = category, recipeViewModel, userViewModel.currentUserId.value ?: -1L)
                 }
             }
-            composable("profile") { ProfileScreen(navController, userViewModel, recipeViewModel) }
+            composable("profile") { ProfileScreen(navController, userViewModel, recipeViewModel, userViewModel.currentUserId.value ?: -1L) }
             composable("add_screen") { AddScreen(navController, recipeViewModel, userViewModel, userViewModel.currentUserId.value) }
             composable("recipe_detail_screen/{recipeId}") { backStackEntry ->
                 val recipeId = backStackEntry.arguments?.getString("recipeId")?.toIntOrNull()

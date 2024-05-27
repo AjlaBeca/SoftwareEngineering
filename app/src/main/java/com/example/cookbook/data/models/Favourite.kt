@@ -12,6 +12,6 @@ import androidx.room.PrimaryKey
 )
 data class Favourite(
     @PrimaryKey(autoGenerate = true) val favouriteId: Long = 0,
-    val recipeId: Long,
+    val recipeId: Int,
     val userId: Long
 )

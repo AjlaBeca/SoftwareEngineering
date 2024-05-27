@@ -14,9 +14,10 @@ class UserViewModel(application: Application) : AndroidViewModel(application) {
     val currentUserId: MutableLiveData<Long?> = MutableLiveData(
         SharedPreferencesUtil.getUserId(application).takeIf { it != -1L }
     )
+    val isLoggedIn = MutableLiveData(SharedPreferencesUtil.isLoggedIn(application))
 
-    private val _currentUser = MutableLiveData<User>()
-    val currentUser: LiveData<User> get() = _currentUser
+    private val _currentUser = MutableLiveData<User?>()
+    val currentUser: LiveData<User?> get() = _currentUser
 
     init {
         currentUserId.observeForever { userId ->
@@ -40,6 +41,7 @@ class UserViewModel(application: Application) : AndroidViewModel(application) {
         if (user != null) {
             currentUserId.postValue(user.userId)
             SharedPreferencesUtil.setLoggedIn(getApplication(), true, user.userId)
+            isLoggedIn.postValue(true)
         }
         return user
     }
@@ -47,6 +49,7 @@ class UserViewModel(application: Application) : AndroidViewModel(application) {
     fun logout() {
         currentUserId.postValue(null)
         SharedPreferencesUtil.setLoggedIn(getApplication(), false)
+        isLoggedIn.postValue(false)
     }
 
     suspend fun getUserByEmail(email: String): User? {
@@ -55,6 +58,21 @@ class UserViewModel(application: Application) : AndroidViewModel(application) {
 
     suspend fun getUserById(userId: Long): User? {
         return repository.getUserById(userId)
+    }
+
+    fun updateUserProfile(updatedUser: User) {
+        viewModelScope.launch {
+            repository.updateUser(updatedUser)
+            refreshCurrentUser()
+        }
+    }
+
+    fun refreshCurrentUser() {
+        currentUserId.value?.let {
+            viewModelScope.launch {
+                _currentUser.value = getUserById(it)
+            }
+        }
     }
 
     class UserViewModelFactory(private val application: Application) : ViewModelProvider.AndroidViewModelFactory(application) {
