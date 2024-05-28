@@ -16,10 +16,7 @@ import com.example.cookbook.data.models.Favourite
 import com.example.cookbook.data.models.Recipe
 import com.example.cookbook.data.repositories.FavouriteRepository
 import com.example.cookbook.data.repositories.RecipeRepository
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-
 
 class RecipeViewModel(
     private val recipeRepository: RecipeRepository,
@@ -28,33 +25,45 @@ class RecipeViewModel(
     val readAllData: LiveData<List<Recipe>> = recipeRepository.readAllData
 
     private val _isFavourite = MutableLiveData<Boolean>()
-    val isFavourite: LiveData<Boolean> get() = _isFavourite
+    //val isFavourite: LiveData<Boolean> get() = _isFavourite
 
-    init {
+    fun fetchInitialFavouriteStatus(recipeId: Int, userId: Long) {
         viewModelScope.launch {
-            fetchInitialFavoriteStatus(0, 0L)
+            val favouriteStatus = favouriteRepository.isFavourite(recipeId, userId)
+            _isFavourite.postValue(favouriteStatus.value)
         }
-    }
-
-    suspend fun fetchInitialFavoriteStatus(recipeId: Int, userId: Long) {
-        val favourite = favouriteRepository.isFavourite(recipeId, userId)
-        _isFavourite.postValue(favourite != null)
     }
 
     fun addFavourite(favourite: Favourite) {
         viewModelScope.launch {
             favouriteRepository.addFavourite(favourite)
-            _isFavourite.value = true
-            Log.d("RecipeViewModel", "Added favourite for recipeId: ${favourite.recipeId}, userId: ${favourite.userId}")
         }
     }
 
     fun deleteFavourite(favourite: Favourite) {
         viewModelScope.launch {
             favouriteRepository.deleteFavourite(favourite)
-            _isFavourite.value = false
-            Log.d("RecipeViewModel", "Deleted favourite for recipeId: ${favourite.recipeId}, userId: ${favourite.userId}")
         }
+    }
+
+    fun isFavourite(recipeId: Int, userId: Long): LiveData<Boolean> {
+        return favouriteRepository.isFavourite(recipeId, userId)
+    }
+
+    fun getUserFavourites(userId: Long): LiveData<List<Recipe>> {
+        return favouriteRepository.getUserFavourites(userId)
+    }
+
+    fun getRecipesByCategory(categoryId: Int): LiveData<List<Recipe>> {
+        return recipeRepository.getRecipesByCategory(categoryId)
+    }
+
+    fun getRecipesByUser(userId: Long): LiveData<List<Recipe>> {
+        return recipeRepository.getRecipesByUser(userId)
+    }
+
+    fun getAllRecipes(): LiveData<List<Recipe>> {
+        return recipeRepository.readAllData
     }
 
     var recipeName by mutableStateOf("")
@@ -110,30 +119,14 @@ class RecipeViewModel(
 
     fun isValidRecipe(): Boolean {
         Log.d("RecipeViewModel", "Checking if recipe is valid...")
-        val isValid = recipeName.isNotBlank() && recipeInstructions.isNotBlank() && recipeIngredients.isNotBlank()
+        val isValid =
+            recipeName.isNotBlank() && recipeInstructions.isNotBlank() && recipeIngredients.isNotBlank()
         Log.d("RecipeViewModel", "Recipe is valid: $isValid")
         return isValid
     }
 
-    fun getRecipesByCategory(categoryId: Int): LiveData<List<Recipe>> {
-        return recipeRepository.getRecipesByCategory(categoryId)
-    }
-
-    fun getRecipesByUser(userId: Long): LiveData<List<Recipe>> {
-        return recipeRepository.getRecipesByUser(userId)
-    }
-
-    fun isFavourite(recipeId: Int, userId: Long): LiveData<Boolean> {
-        val isFavouriteLiveData = MutableLiveData<Boolean>()
-        viewModelScope.launch {
-            val favourite = favouriteRepository.isFavourite(recipeId, userId)
-            isFavouriteLiveData.value = (favourite != null)
-            Log.d("RecipeViewModel", "Is favourite for recipeId: $recipeId, userId: $userId = ${isFavouriteLiveData.value}")
-        }
-        return isFavouriteLiveData
-    }
-
-    private val placeholderImageUri: Uri? = Uri.parse("android.resource://com.example.cookbook/${R.drawable.placeholder}")
+    private val placeholderImageUri: Uri? =
+        Uri.parse("android.resource://com.example.cookbook/${R.drawable.placeholder}")
 
     fun addRecipe(authorId: Long) {
         val newRecipe = Recipe(
@@ -148,14 +141,19 @@ class RecipeViewModel(
             imagePath = recipeImageUri?.toString() ?: placeholderImageUri?.toString(),
         )
         viewModelScope.launch {
-            recipeRepository.addRecipe(newRecipe)
-            resetFields()
+            try {
+                recipeRepository.addRecipe(newRecipe)
+                resetFields()
+            } catch (e: Exception) {
+                Log.e("RecipeViewModel", "Error adding recipe: ${e.message}")
+            }
         }
     }
 
     fun deleteRecipe(recipeId: Int) {
         viewModelScope.launch {
             recipeRepository.deleteRecipe(recipeId)
+            favouriteRepository.deleteFavouritesByRecipeId(recipeId)
         }
     }
 
@@ -164,15 +162,11 @@ class RecipeViewModel(
         recipeInstructions = ""
         recipeIngredients = ""
         recipeTime = ""
-        recipeComplexity = ""
+        recipeComplexity = "Beginner"
         recipeServings = 1
         recipeAuthorId = 1
         recipeImageUri = null
         recipeCategoryId = 1
-    }
-
-    fun getAllRecipes(): LiveData<List<Recipe>> {
-        return recipeRepository.readAllData
     }
 
     class RecipeViewModelFactory(private val application: Application) : ViewModelProvider.Factory {

@@ -1,6 +1,5 @@
 package com.example.cookbook
 
-import HomeScreen
 import RecipeViewModel
 import android.os.Bundle
 import android.util.Log
@@ -19,13 +18,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.cookbook.data.models.Recipe
-import com.example.cookbook.data.repositories.FavouriteRepository
-import com.example.cookbook.data.repositories.RecipeRepository
 import com.example.cookbook.data.viewmodels.UserViewModel
 import com.example.cookbook.ui.screens.*
 import com.example.cookbook.ui.theme.CookBookTheme
@@ -33,7 +32,9 @@ import com.example.cookbook.utils.SharedPreferencesUtil
 
 class MainActivity : ComponentActivity() {
     private val TAG = "MainActivity"
-    private val userViewModel: UserViewModel by viewModels { UserViewModel.UserViewModelFactory(application) }
+    private val userViewModel: UserViewModel by viewModels {
+        UserViewModel.UserViewModelFactory(application)
+    }
     private val recipeViewModel: RecipeViewModel by viewModels {
         RecipeViewModel.RecipeViewModelFactory(application)
     }
@@ -79,7 +80,13 @@ fun CookBookApp(userViewModel: UserViewModel, recipeViewModel: RecipeViewModel) 
 }
 
 @Composable
-fun MyApp(navController: NavHostController, userViewModel: UserViewModel, recipeViewModel: RecipeViewModel, recipeList: List<Recipe>, isLoggedIn: Boolean) {
+fun MyApp(
+    navController: NavHostController,
+    userViewModel: UserViewModel,
+    recipeViewModel: RecipeViewModel,
+    recipeList: List<Recipe>,
+    isLoggedIn: Boolean
+) {
     val startDestination = if (isLoggedIn) "list" else "login"
 
     Scaffold(
@@ -90,30 +97,71 @@ fun MyApp(navController: NavHostController, userViewModel: UserViewModel, recipe
             }
         }
     ) { innerPadding ->
-        NavHost(navController = navController, startDestination = startDestination, Modifier.padding(innerPadding)) {
+        NavHost(
+            navController = navController,
+            startDestination = startDestination,
+            Modifier.padding(innerPadding)
+        ) {
             composable("login") { LoginScreen(navController, userViewModel) }
             composable("signup") { SignUpScreen(navController, userViewModel) }
             composable("home") { HomeScreen(navController, userViewModel) }
             composable("editProfile") {
-                EditProfileScreen(navController, userViewModel, userViewModel.currentUserId.value ?: -1L)
+                EditProfileScreen(
+                    navController,
+                    userViewModel,
+                    userViewModel.currentUserId.value ?: -1L
+                )
             }
             composable("list") {
-                ListScreen(navController, "", recipeViewModel, userViewModel.currentUserId.value ?: -1L)
+                ListScreen(
+                    navController,
+                    null,
+                    recipeViewModel,
+                    userViewModel,
+                    userViewModel.currentUserId.value ?: -1L
+                )
             }
             composable("listScreen/{category}") { backStackEntry ->
                 val category = backStackEntry.arguments?.getString("category")
                 if (category != null) {
-                    ListScreen(navController = navController, category = category, recipeViewModel, userViewModel.currentUserId.value ?: -1L)
+                    ListScreen(
+                        navController = navController,
+                        category = category,
+                        recipeViewModel,
+                        userViewModel,
+                        userViewModel.currentUserId.value ?: -1L
+                    )
                 }
             }
-            composable("profile") { ProfileScreen(navController, userViewModel, recipeViewModel, userViewModel.currentUserId.value ?: -1L) }
-            composable("add_screen") { AddScreen(navController, recipeViewModel, userViewModel, userViewModel.currentUserId.value) }
-            composable("recipe_detail_screen/{recipeId}") { backStackEntry ->
-                val recipeId = backStackEntry.arguments?.getString("recipeId")?.toIntOrNull()
+            composable("profile") {
+                ProfileScreen(
+                    navController,
+                    userViewModel,
+                    recipeViewModel,
+                    userViewModel.currentUserId.value ?: -1L
+                )
+            }
+            composable("addRecipe") {
+                AddScreen(
+                    navController,
+                    recipeViewModel,
+                    userViewModel,
+                    userViewModel.currentUserId.value ?: -1L
+                )
+            }
+            composable("profile/{userId}") { backStackEntry ->
+                val userId = backStackEntry.arguments?.getString("userId")?.toLongOrNull() ?: -1L
+                ProfileScreen(navController, userViewModel, recipeViewModel, userId)
+            }
+            composable(
+                route = "details/{recipeId}",
+                arguments = listOf(navArgument("recipeId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val recipeId = backStackEntry.arguments?.getInt("recipeId")
                 Log.d("Navigation", "Recipe ID: $recipeId")
                 val recipe = recipeList.find { it.recipeId == recipeId }
                 recipe?.let {
-                    RecipeDetailScreen(recipe, userViewModel)
+                    RecipeDetailScreen(navController, recipe, userViewModel)
                 }
             }
         }

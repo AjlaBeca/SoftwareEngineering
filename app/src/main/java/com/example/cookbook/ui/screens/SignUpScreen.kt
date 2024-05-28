@@ -177,12 +177,7 @@ fun SignUpScreen(navController: NavController, userViewModel: UserViewModel, mod
                 Text("Already have an account? Sign In", color = White)
             }
 
-            TextButton(
-                onClick = { /* handle forgot password */ },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text("Forgot password?", color = DarkOrange)
-            }
+
         }
     }
 }

@@ -21,6 +21,6 @@ interface RecipeDao {
     @Query("SELECT * FROM recipes WHERE categoryId = :categoryId ORDER BY recipeId DESC")
     fun readRecipesByCategory(categoryId: Int): LiveData<List<Recipe>>
 
-    @Query("SELECT * FROM recipes WHERE authorId = :userId")
+    @Query("SELECT * FROM recipes WHERE authorId = :userId ORDER BY recipeId DESC")
     fun getRecipesByUser(userId: Long): LiveData<List<Recipe>>
 }

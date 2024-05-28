@@ -21,6 +21,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -34,6 +35,7 @@ import coil.size.Size
 import com.example.cookbook.data.viewmodels.UserViewModel
 import com.example.cookbook.ui.theme.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddScreen(navController: NavHostController, recipeViewModel: RecipeViewModel, userViewModel: UserViewModel, currentUserId: Long?) {
     val context = LocalContext.current
@@ -94,6 +96,13 @@ fun AddScreen(navController: NavHostController, recipeViewModel: RecipeViewModel
                             recipeViewModel.onRecipeNameChange(it)
                         },
                         label = { Text("Recipe Name") },
+                        colors = TextFieldDefaults.outlinedTextFieldColors(
+                            cursorColor = White,
+                            focusedBorderColor = LighterGray,
+                            unfocusedBorderColor = LighterGray,
+                            focusedLabelColor = LighterGray,
+                            unfocusedLabelColor = LighterGray
+                        ),
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -103,6 +112,13 @@ fun AddScreen(navController: NavHostController, recipeViewModel: RecipeViewModel
                             instructions = it
                             recipeViewModel.onRecipeInstructionsChange(it)
                         },
+                        colors = TextFieldDefaults.outlinedTextFieldColors(
+                            cursorColor = White,
+                            focusedBorderColor = LighterGray,
+                            unfocusedBorderColor = LighterGray,
+                            focusedLabelColor = LighterGray,
+                            unfocusedLabelColor = LighterGray
+                        ),
                         label = { Text("Recipe Instructions") },
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -113,6 +129,13 @@ fun AddScreen(navController: NavHostController, recipeViewModel: RecipeViewModel
                             ingredients = it
                             recipeViewModel.onRecipeIngredientsChange(it)
                         },
+                        colors = TextFieldDefaults.outlinedTextFieldColors(
+                            cursorColor = White,
+                            focusedBorderColor = LighterGray,
+                            unfocusedBorderColor = LighterGray,
+                            focusedLabelColor = LighterGray,
+                            unfocusedLabelColor = LighterGray
+                        ),
                         label = { Text("Recipe Ingredients") },
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -127,6 +150,13 @@ fun AddScreen(navController: NavHostController, recipeViewModel: RecipeViewModel
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Text,
                             imeAction = ImeAction.Next
+                        ),
+                        colors = TextFieldDefaults.outlinedTextFieldColors(
+                            cursorColor = White,
+                            focusedBorderColor = LighterGray,
+                            unfocusedBorderColor = LighterGray,
+                            focusedLabelColor = LighterGray,
+                            unfocusedLabelColor = LighterGray
                         ),
                         keyboardActions = KeyboardActions(onNext = { FocusDirection.Down })
                     )
@@ -148,6 +178,13 @@ fun AddScreen(navController: NavHostController, recipeViewModel: RecipeViewModel
                             recipeViewModel.onRecipeServingsChange(it.toIntOrNull() ?: 1)
                         },
                         label = { Text("Servings") },
+                        colors = TextFieldDefaults.outlinedTextFieldColors(
+                            cursorColor = White,
+                            focusedBorderColor = LighterGray,
+                            unfocusedBorderColor = LighterGray,
+                            focusedLabelColor = LighterGray,
+                            unfocusedLabelColor = LighterGray
+                        ),
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Number,
                             imeAction = ImeAction.Done
@@ -188,7 +225,6 @@ fun AddScreen(navController: NavHostController, recipeViewModel: RecipeViewModel
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Button to add recipe
                 Button(
                     onClick = {
                         val recipeId = recipeViewModel.addRecipe(currentUserId?.toLong() ?: return@Button)
@@ -204,6 +240,7 @@ fun AddScreen(navController: NavHostController, recipeViewModel: RecipeViewModel
         }
     }
 }
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DropdownMenuComplexity(selectedComplexity: String, onComplexitySelected: (String) -> Unit) {
     val complexityOptions = listOf("Beginner", "Intermediate", "Advanced", "Expert")
@@ -216,6 +253,13 @@ fun DropdownMenuComplexity(selectedComplexity: String, onComplexitySelected: (St
             label = { Text("Recipe Complexity") },
             modifier = Modifier.fillMaxWidth(),
             readOnly = true,
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                cursorColor = White,
+                focusedBorderColor = LighterGray,
+                unfocusedBorderColor = LighterGray,
+                focusedLabelColor = LighterGray,
+                unfocusedLabelColor = LighterGray
+            ),
             trailingIcon = {
                 IconButton(onClick = { expanded = true }) {
                     Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
@@ -239,6 +283,7 @@ fun DropdownMenuComplexity(selectedComplexity: String, onComplexitySelected: (St
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DropdownMenuCategory(selectedCategory: String, onCategorySelected: (String) -> Unit) {
     val categoryOptions = listOf("Breakfast", "Lunch", "Dinner", "Dessert")
@@ -251,6 +296,13 @@ fun DropdownMenuCategory(selectedCategory: String, onCategorySelected: (String) 
             label = { Text("Recipe Category") },
             modifier = Modifier.fillMaxWidth(),
             readOnly = true,
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                cursorColor = White,
+                focusedBorderColor = LighterGray,
+                unfocusedBorderColor = LighterGray,
+                focusedLabelColor = LighterGray,
+                unfocusedLabelColor = LighterGray
+            ),
             trailingIcon = {
                 IconButton(onClick = { expanded = true }) {
                     Icon(Icons.Filled.ArrowDropDown, contentDescription = null)

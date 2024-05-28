@@ -138,6 +138,13 @@ fun LoginScreen(navController: NavController, userViewModel: UserViewModel, modi
             ) {
                 Text("Don't have an account? Sign Up")
             }
+
+            TextButton(
+                onClick = { /* handle forgot password */ },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("Forgot password?", color = DarkOrange)
+            }
         }
     }
 }

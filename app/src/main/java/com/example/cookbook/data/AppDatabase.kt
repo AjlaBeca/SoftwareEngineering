@@ -1,5 +1,6 @@
 package com.example.cookbook.data
 
+
 import android.content.Context
 import android.util.Log
 import androidx.room.Database
@@ -11,10 +12,9 @@ import com.example.cookbook.data.models.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-
 @Database(
     entities = [Category::class, Recipe::class, User::class, Favourite::class],
-    version = 11,
+    version = 12,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -27,7 +27,10 @@ abstract class AppDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
-        fun getDatabase(context: Context, scope: CoroutineScope = CoroutineScope(SupervisorJob())): AppDatabase {
+        fun getDatabase(
+            context: Context,
+            scope: CoroutineScope = CoroutineScope(SupervisorJob())
+        ): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
