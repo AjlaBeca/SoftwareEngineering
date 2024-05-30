@@ -327,20 +327,23 @@ fun RecipeItem(
                         .padding(start = 16.dp, end = 8.dp),
                     textAlign = TextAlign.Start
                 )
-                Text(
-                    buildAnnotatedString {
-                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                            append("Complexity: ")
-                        }
-                        append(recipe.complexity)
-                    },
-                    color = MaterialTheme.colorScheme.secondary,
-                    style = MaterialTheme.typography.bodySmall,
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 16.dp, end = 8.dp),
-                    textAlign = TextAlign.Start
-                )
+                        .padding(start = 16.dp, end = 8.dp)
+                ) {
+                    Text(
+                        text = "Complexity: ",
+                        color = MaterialTheme.colorScheme.secondary,
+                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold)
+                    )
+                    Text(
+                        text = recipe.complexity,
+                        color = MaterialTheme.colorScheme.secondary,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
                 //Spacer(modifier = Modifier.height(4.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
