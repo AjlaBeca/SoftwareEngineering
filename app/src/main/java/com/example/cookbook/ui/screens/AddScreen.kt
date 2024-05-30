@@ -14,6 +14,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -73,8 +75,22 @@ fun AddScreen(navController: NavHostController, recipeViewModel: RecipeViewModel
         }
     )
 
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Add Recipe") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        }
+    ) { innerPadding ->
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding),
         contentAlignment = Alignment.Center
     ) {
         LazyColumn(
@@ -97,11 +113,11 @@ fun AddScreen(navController: NavHostController, recipeViewModel: RecipeViewModel
                         },
                         label = { Text("Recipe Name") },
                         colors = TextFieldDefaults.outlinedTextFieldColors(
-                            cursorColor = White,
-                            focusedBorderColor = LighterGray,
-                            unfocusedBorderColor = LighterGray,
-                            focusedLabelColor = LighterGray,
-                            unfocusedLabelColor = LighterGray
+                            cursorColor = MaterialTheme.colorScheme.secondary,
+                            focusedBorderColor = MaterialTheme.colorScheme.tertiary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.tertiary,
+                            focusedLabelColor = MaterialTheme.colorScheme.tertiary,
+                            unfocusedLabelColor = MaterialTheme.colorScheme.tertiary
                         ),
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -113,11 +129,11 @@ fun AddScreen(navController: NavHostController, recipeViewModel: RecipeViewModel
                             recipeViewModel.onRecipeInstructionsChange(it)
                         },
                         colors = TextFieldDefaults.outlinedTextFieldColors(
-                            cursorColor = White,
-                            focusedBorderColor = LighterGray,
-                            unfocusedBorderColor = LighterGray,
-                            focusedLabelColor = LighterGray,
-                            unfocusedLabelColor = LighterGray
+                            cursorColor = MaterialTheme.colorScheme.secondary,
+                            focusedBorderColor = MaterialTheme.colorScheme.tertiary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.tertiary,
+                            focusedLabelColor = MaterialTheme.colorScheme.tertiary,
+                            unfocusedLabelColor = MaterialTheme.colorScheme.tertiary
                         ),
                         label = { Text("Recipe Instructions") },
                         modifier = Modifier.fillMaxWidth()
@@ -130,11 +146,11 @@ fun AddScreen(navController: NavHostController, recipeViewModel: RecipeViewModel
                             recipeViewModel.onRecipeIngredientsChange(it)
                         },
                         colors = TextFieldDefaults.outlinedTextFieldColors(
-                            cursorColor = White,
-                            focusedBorderColor = LighterGray,
-                            unfocusedBorderColor = LighterGray,
-                            focusedLabelColor = LighterGray,
-                            unfocusedLabelColor = LighterGray
+                            cursorColor = MaterialTheme.colorScheme.secondary,
+                            focusedBorderColor = MaterialTheme.colorScheme.tertiary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.tertiary,
+                            focusedLabelColor = MaterialTheme.colorScheme.tertiary,
+                            unfocusedLabelColor = MaterialTheme.colorScheme.tertiary
                         ),
                         label = { Text("Recipe Ingredients") },
                         modifier = Modifier.fillMaxWidth()
@@ -151,12 +167,13 @@ fun AddScreen(navController: NavHostController, recipeViewModel: RecipeViewModel
                             keyboardType = KeyboardType.Text,
                             imeAction = ImeAction.Next
                         ),
+                        modifier = Modifier.fillMaxWidth(),
                         colors = TextFieldDefaults.outlinedTextFieldColors(
-                            cursorColor = White,
-                            focusedBorderColor = LighterGray,
-                            unfocusedBorderColor = LighterGray,
-                            focusedLabelColor = LighterGray,
-                            unfocusedLabelColor = LighterGray
+                            cursorColor = MaterialTheme.colorScheme.secondary,
+                            focusedBorderColor = MaterialTheme.colorScheme.tertiary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.tertiary,
+                            focusedLabelColor = MaterialTheme.colorScheme.tertiary,
+                            unfocusedLabelColor = MaterialTheme.colorScheme.tertiary
                         ),
                         keyboardActions = KeyboardActions(onNext = { FocusDirection.Down })
                     )
@@ -177,13 +194,14 @@ fun AddScreen(navController: NavHostController, recipeViewModel: RecipeViewModel
                             servings = it.toIntOrNull() ?: 1
                             recipeViewModel.onRecipeServingsChange(it.toIntOrNull() ?: 1)
                         },
+                        modifier = Modifier.fillMaxWidth(),
                         label = { Text("Servings") },
                         colors = TextFieldDefaults.outlinedTextFieldColors(
-                            cursorColor = White,
-                            focusedBorderColor = LighterGray,
-                            unfocusedBorderColor = LighterGray,
-                            focusedLabelColor = LighterGray,
-                            unfocusedLabelColor = LighterGray
+                            cursorColor = MaterialTheme.colorScheme.secondary,
+                            focusedBorderColor = MaterialTheme.colorScheme.tertiary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.tertiary,
+                            focusedLabelColor = MaterialTheme.colorScheme.tertiary,
+                            unfocusedLabelColor = MaterialTheme.colorScheme.tertiary
                         ),
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Number,
@@ -199,7 +217,7 @@ fun AddScreen(navController: NavHostController, recipeViewModel: RecipeViewModel
                         .padding(top = 8.dp)
                         .padding(horizontal = 4.dp),
                     shape = MaterialTheme.shapes.medium,
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = White),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.secondary),
                 ) {
                     Text("Select Image")
                 }
@@ -227,16 +245,21 @@ fun AddScreen(navController: NavHostController, recipeViewModel: RecipeViewModel
 
                 Button(
                     onClick = {
-                        val recipeId = recipeViewModel.addRecipe(currentUserId?.toLong() ?: return@Button)
+                        val recipeId =
+                            recipeViewModel.addRecipe(currentUserId?.toLong() ?: return@Button)
                         navController.popBackStack()
                     },
                     enabled = recipeViewModel.isValidRecipe(),
                     shape = MaterialTheme.shapes.medium,
-                    colors = ButtonDefaults.buttonColors(containerColor = Orange, contentColor = White),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.secondary
+                    ),
                 ) {
                     Text("Add Recipe")
                 }
             }
+        }
         }
     }
 }
@@ -254,11 +277,11 @@ fun DropdownMenuComplexity(selectedComplexity: String, onComplexitySelected: (St
             modifier = Modifier.fillMaxWidth(),
             readOnly = true,
             colors = TextFieldDefaults.outlinedTextFieldColors(
-                cursorColor = White,
-                focusedBorderColor = LighterGray,
-                unfocusedBorderColor = LighterGray,
-                focusedLabelColor = LighterGray,
-                unfocusedLabelColor = LighterGray
+                cursorColor = MaterialTheme.colorScheme.secondary,
+                focusedBorderColor = MaterialTheme.colorScheme.tertiary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.tertiary,
+                focusedLabelColor = MaterialTheme.colorScheme.tertiary,
+                unfocusedLabelColor = MaterialTheme.colorScheme.tertiary
             ),
             trailingIcon = {
                 IconButton(onClick = { expanded = true }) {
@@ -297,11 +320,11 @@ fun DropdownMenuCategory(selectedCategory: String, onCategorySelected: (String) 
             modifier = Modifier.fillMaxWidth(),
             readOnly = true,
             colors = TextFieldDefaults.outlinedTextFieldColors(
-                cursorColor = White,
-                focusedBorderColor = LighterGray,
-                unfocusedBorderColor = LighterGray,
-                focusedLabelColor = LighterGray,
-                unfocusedLabelColor = LighterGray
+                cursorColor = MaterialTheme.colorScheme.secondary,
+                focusedBorderColor = MaterialTheme.colorScheme.tertiary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.tertiary,
+                focusedLabelColor = MaterialTheme.colorScheme.tertiary,
+                unfocusedLabelColor = MaterialTheme.colorScheme.tertiary
             ),
             trailingIcon = {
                 IconButton(onClick = { expanded = true }) {
@@ -326,15 +349,7 @@ fun DropdownMenuCategory(selectedCategory: String, onCategorySelected: (String) 
     }
 }
 
-fun categoryToId(category: String): Int {
-    return when (category) {
-        "Breakfast" -> 1
-        "Lunch" -> 2
-        "Dinner" -> 3
-        "Dessert" -> 4
-        else -> 1
-    }
-}
+
 
 private fun saveImageUriToPreferences(context: Context, uri: Uri?) {
     val sharedPref = context.getSharedPreferences("image_pref", Context.MODE_PRIVATE)
@@ -343,4 +358,14 @@ private fun saveImageUriToPreferences(context: Context, uri: Uri?) {
         apply()
     }
     Log.d("SharedPreferences", "Saved URI: ${uri?.toString()}")
+}
+
+fun categoryToId(category: String): Int {
+    return when (category) {
+        "Breakfast" -> 1
+        "Lunch" -> 2
+        "Dinner" -> 3
+        "Dessert" -> 4
+        else -> 1
+    }
 }

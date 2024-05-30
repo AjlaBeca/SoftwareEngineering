@@ -1,5 +1,6 @@
 package com.example.cookbook.ui.screens
 
+import android.content.res.Resources
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -21,6 +22,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.cookbook.R
 import com.example.cookbook.data.viewmodels.UserViewModel
+import com.example.cookbook.ui.theme.Orange
+import com.example.cookbook.ui.theme.White
 
 @Composable
 fun HomeScreen(navController: NavHostController, userViewModel: UserViewModel) {
@@ -28,13 +31,13 @@ fun HomeScreen(navController: NavHostController, userViewModel: UserViewModel) {
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+        //horizontalAlignment = Alignment.CenterHorizontally
     ) {
         val text = buildAnnotatedString {
-            withStyle(style = MaterialTheme.typography.displayMedium.toSpanStyle().copy(fontWeight = FontWeight.Bold)) {
+            withStyle(style = MaterialTheme.typography.displaySmall.toSpanStyle().copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)) {
                 append("Hello, ")
             }
-            withStyle(style = MaterialTheme.typography.displayMedium.toSpanStyle().copy(fontWeight = FontWeight.Bold, color = Color(0xFFFFA500))) {
+            withStyle(style = MaterialTheme.typography.displaySmall.toSpanStyle().copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)) {
                 append(currentUser?.username ?: "")
             }
         }
@@ -85,12 +88,12 @@ fun CategoryButton(navController: NavHostController, category: String, imageResI
                 .clip(RoundedCornerShape(10.dp)),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.Transparent,
-                contentColor = Color.White
+                contentColor = White
             )
         ) {
             Text(
                 text = category,
-                color = Color.White,
+                color = White,
                 style = MaterialTheme.typography.headlineLarge
             )
         }

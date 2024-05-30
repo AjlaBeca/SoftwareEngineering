@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -75,9 +76,6 @@ fun ProfileScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var recipeToDelete by remember { mutableStateOf<Recipe?>(null) }
 
-
-    Spacer(modifier = Modifier.height(30.dp))
-
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
@@ -92,7 +90,6 @@ fun ProfileScreen(
                 modifier = Modifier
                     .size(90.dp)
                     .clip(CircleShape)
-                    .background(Color.Gray)
                     .clickable { navController.navigate("editProfile") }
             ) {
                 val painter = imageUri?.let { rememberAsyncImagePainter(model = it) }
@@ -114,14 +111,14 @@ fun ProfileScreen(
                     Icon(
                         imageVector = Icons.Default.Edit,
                         contentDescription = "Edit Profile",
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
+                        tint = White,
+                        modifier = Modifier.size(30.dp)
                     )
                 }
             }
             Text(
                 text = userProfile?.username ?: "USERNAME",
-                color = White,
+                color = MaterialTheme.colorScheme.secondary,
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.displayMedium,
                 modifier = Modifier.fillMaxWidth()
@@ -136,8 +133,8 @@ fun ProfileScreen(
                 Button(
                     onClick = { showUserRecipes = true },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (showUserRecipes) Orange else Color.Transparent,
-                        contentColor = if (showUserRecipes) White else LighterGray
+                        containerColor = if (showUserRecipes) MaterialTheme.colorScheme.primary else Color.Transparent,
+                        contentColor = if (showUserRecipes) White else MaterialTheme.colorScheme.tertiary
                     ),
                     shape = MaterialTheme.shapes.medium,
                     modifier = Modifier
@@ -147,21 +144,22 @@ fun ProfileScreen(
                         .clip(RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp))
                         .border(
                             width = 1.dp,
-                            color = if (showUserRecipes) Color.Transparent else Gray,
+                            color = if (showUserRecipes) Color.Transparent else MaterialTheme.colorScheme.primaryContainer,
                             shape = MaterialTheme.shapes.medium
                         )
                 ) {
                     Text(
                         text = "My Recipes",
-                        color = if (showUserRecipes) White else LighterGray
+                        color = if (showUserRecipes) White else MaterialTheme.colorScheme.tertiary,
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.ExtraBold),
                     )
                 }
                 Spacer(modifier = Modifier.width(2.dp))
                 Button(
                     onClick = { showUserRecipes = false },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (!showUserRecipes) Orange else Color.Transparent,
-                        contentColor = if (!showUserRecipes) White else LighterGray
+                        containerColor = if (!showUserRecipes) MaterialTheme.colorScheme.primary else Color.Transparent,
+                        contentColor = if (!showUserRecipes) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.tertiary
                     ),
                     shape = MaterialTheme.shapes.medium,
                     modifier = Modifier
@@ -171,20 +169,22 @@ fun ProfileScreen(
                         .clip(MaterialTheme.shapes.medium)
                         .border(
                             width = 1.dp,
-                            color = if (!showUserRecipes) Color.Transparent else Gray,
+                            color = if (!showUserRecipes) Color.Transparent else MaterialTheme.colorScheme.primaryContainer,
                             shape = MaterialTheme.shapes.medium
                         )
                 ) {
                     Text(
                         text = "Favourites",
-                        color = if (!showUserRecipes) White else LighterGray
+                        color = if (!showUserRecipes) White else MaterialTheme.colorScheme.tertiary,
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.ExtraBold),
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             if (showUserRecipes) {
+                Spacer(modifier = Modifier.height(8.dp))
                 AddRecipeButton(navController = navController, modifier = Modifier.fillMaxWidth().height(62.dp))
             }
 
@@ -192,12 +192,12 @@ fun ProfileScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(top = 50.dp),
+                        .padding(top = 30.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = if (showUserRecipes) "No recipes found." else "No favourites found.",
-                        color = LighterGray,
+                        color = MaterialTheme.colorScheme.tertiary,
                         textAlign = TextAlign.Center
                     )
                 }
@@ -264,7 +264,7 @@ fun ProfileScreen(
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                 contentDescription = "Logout",
-                tint = Color.Red
+                tint = MaterialTheme.colorScheme.error
             )
         }
 
@@ -288,14 +288,14 @@ fun AddRecipeButton(navController: NavHostController, modifier: Modifier = Modif
         modifier = modifier
             .padding(8.dp)
             .clip(RoundedCornerShape(10.dp))
-            .background(Color.Gray)
+            .background(MaterialTheme.colorScheme.primaryContainer)
             .clickable { navController.navigate("addRecipe") },
         contentAlignment = Alignment.Center
     ) {
         Icon(
             imageVector = Icons.Default.Add,
             contentDescription = "Add Recipe",
-            tint = Color.White,
+            tint = MaterialTheme.colorScheme.secondary,
             modifier = Modifier.size(48.dp)
         )
     }

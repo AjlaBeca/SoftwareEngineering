@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -28,7 +29,11 @@ import com.example.cookbook.utils.SharedPreferencesUtil
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SignUpScreen(navController: NavController, userViewModel: UserViewModel, modifier: Modifier = Modifier) {
+fun SignUpScreen(
+    navController: NavController,
+    userViewModel: UserViewModel,
+    modifier: Modifier = Modifier
+) {
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -133,18 +138,31 @@ fun SignUpScreen(navController: NavController, userViewModel: UserViewModel, mod
                             username.isEmpty() || email.isEmpty() || password.isEmpty() -> {
                                 errorMessage = "All fields must be filled out"
                             }
+
                             !Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
                                 errorMessage = "Please enter a valid email"
                             }
+
                             else -> {
                                 errorMessage = ""
                                 val existingUser = userViewModel.getUserByEmail(email)
                                 if (existingUser == null) {
-                                    val signUpSuccess = userViewModel.addUser(User(email = email, password = password, username = username, image = null))
+                                    val signUpSuccess = userViewModel.addUser(
+                                        User(
+                                            email = email,
+                                            password = password,
+                                            username = username,
+                                            image = null
+                                        )
+                                    )
                                     if (signUpSuccess) {
                                         val user = userViewModel.getUserByEmail(email)
                                         if (user != null) {
-                                            SharedPreferencesUtil.setLoggedIn(navController.context, true, user.userId)
+                                            SharedPreferencesUtil.setLoggedIn(
+                                                navController.context,
+                                                true,
+                                                user.userId
+                                            )
                                             navController.navigate("login")
                                         } else {
                                             errorMessage = "Failed to sign up. Please try again."
@@ -165,7 +183,10 @@ fun SignUpScreen(navController: NavController, userViewModel: UserViewModel, mod
                     containerColor = Orange
                 )
             ) {
-                Text("Sign Up", color = Color.White)
+                Text(
+                    "Sign Up", color = Color.White,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.ExtraBold),
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))

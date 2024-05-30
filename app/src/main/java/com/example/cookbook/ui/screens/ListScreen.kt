@@ -1,6 +1,7 @@
 package com.example.cookbook.ui.screens
 
 import RecipeViewModel
+import android.content.res.Resources
 import android.net.Uri
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -17,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -29,8 +31,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -47,7 +53,6 @@ import com.example.cookbook.R
 import com.example.cookbook.data.models.Favourite
 import com.example.cookbook.data.models.User
 import com.example.cookbook.data.viewmodels.UserViewModel
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ListScreen(
@@ -62,6 +67,9 @@ fun ListScreen(
     val allRecipes by (categoryId?.let { recipeViewModel.getRecipesByCategory(it) }
         ?: recipeViewModel.getAllRecipes()).observeAsState(listOf())
     var searchText by remember { mutableStateOf("") }
+    var isSearchFocused by remember { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
+    val focusManager = LocalFocusManager.current
 
     var showDeleteDialog by remember { mutableStateOf(false) }
     var recipeToDelete by remember { mutableStateOf<Recipe?>(null) }
@@ -77,7 +85,6 @@ fun ListScreen(
             recipeViewModel.fetchInitialFavouriteStatus(recipe.recipeId ?: 0, userId)
         }
     }
-
 
     Spacer(modifier = Modifier.height(30.dp))
 
@@ -97,8 +104,9 @@ fun ListScreen(
                     modifier = Modifier.align(Alignment.Start)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Back"
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = MaterialTheme.colorScheme.secondary
                     )
                 }
             }
@@ -106,18 +114,35 @@ fun ListScreen(
             OutlinedTextField(
                 value = searchText,
                 onValueChange = { searchText = it },
-                label = { Text("Search") },
+                label = { Text("Search", color = MaterialTheme.colorScheme.secondary) },
                 shape = MaterialTheme.shapes.medium,
+                trailingIcon = {
+                    if (isSearchFocused || searchText.isNotEmpty()) {
+                        IconButton(
+                            onClick = {
+                                searchText = ""
+                                isSearchFocused = false
+                                focusManager.clearFocus() // Clear focus here
+                            }
+                        ) {
+                            Icon(imageVector = Icons.Default.Close, contentDescription = "Clear search")
+                        }
+                    }
+                },
                 colors = TextFieldDefaults.outlinedTextFieldColors(
-                    cursorColor = White,
-                    focusedBorderColor = LighterGray,
-                    unfocusedBorderColor = LighterGray,
-                    focusedLabelColor = LighterGray,
-                    unfocusedLabelColor = LighterGray
+                    cursorColor = MaterialTheme.colorScheme.secondary,
+                    focusedBorderColor = MaterialTheme.colorScheme.tertiary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.tertiary,
+                    focusedLabelColor = MaterialTheme.colorScheme.tertiary,
+                    unfocusedLabelColor = MaterialTheme.colorScheme.tertiary
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp, horizontal = 8.dp)
+                    .focusRequester(focusRequester)
+                    .onFocusChanged { focusState ->
+                        isSearchFocused = focusState.isFocused
+                    }
             )
 
             LazyColumn(
@@ -171,7 +196,7 @@ fun ListScreen(
                 ) {
                     Text(
                         text = "No recipes found.",
-                        color = LighterGray,
+                        color = MaterialTheme.colorScheme.secondary,
                         textAlign = TextAlign.Center
                     )
                 }
@@ -207,9 +232,6 @@ fun RecipeItem(
 ) {
     val recipeId = recipe.recipeId ?: 0
     val isFavouriteValue by isFavourite.observeAsState(false) // Ensure initial state is false
-
-    val isDarkTheme = isSystemInDarkTheme()
-
     var user by remember { mutableStateOf<User?>(null) }
 
     // Fetch user details
@@ -219,7 +241,7 @@ fun RecipeItem(
 
     Box(
         modifier = modifier
-            .padding(vertical = 8.dp)
+            .padding(vertical = 4.dp)
             .fillMaxWidth()
             .clickable {
                 navController.navigate("details/${recipe.recipeId}")
@@ -229,12 +251,12 @@ fun RecipeItem(
             modifier = Modifier
                 .fillMaxSize()
                 .clip(shape = RoundedCornerShape(10.dp))
-                .background(DarkerGray)
-                .border(border = BorderStroke(1.dp, Gray), shape = RoundedCornerShape(10.dp)),
+                .background(MaterialTheme.colorScheme.primaryContainer)
+                .border(border = BorderStroke(1.dp, MaterialTheme.colorScheme.primaryContainer), shape = RoundedCornerShape(10.dp)),
         ) {
             Column(
                 horizontalAlignment = Alignment.Start,
-                modifier = Modifier.background(if (isDarkTheme) Gray else LighterGray)
+                modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer)
             ) {
                 recipe.imagePath?.let { imagePath ->
                     Image(
@@ -249,11 +271,11 @@ fun RecipeItem(
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = recipe.name,
-                    color = White,
-                    style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.secondary,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.ExtraBold),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 16.dp, end = 16.dp, bottom = if (recipe.name.length > 30) 8.dp else 8.dp),
+                        .padding(start = 16.dp, end = 16.dp, bottom = if (recipe.name.length > 20) 4.dp else 28.dp),
                     textAlign = TextAlign.Start,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
@@ -265,7 +287,7 @@ fun RecipeItem(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .padding(horizontal = 16.dp)
-                            .padding(bottom = 8.dp)
+                            .padding(bottom = 4.dp)
                     ) {
                         Image(
                             painter = rememberAsyncImagePainter(
@@ -284,13 +306,13 @@ fun RecipeItem(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = it.username,
-                            color = White,
-                            style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                            color = MaterialTheme.colorScheme.secondary,
+                            style = MaterialTheme.typography.bodyMedium
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     buildAnnotatedString {
                         withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
@@ -298,8 +320,8 @@ fun RecipeItem(
                         }
                         append(recipe.time)
                     },
-                    color = White,
-                    style = TextStyle(fontSize = 12.sp),
+                    color = MaterialTheme.colorScheme.secondary,
+                    style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(start = 16.dp),
@@ -312,18 +334,18 @@ fun RecipeItem(
                         }
                         append(recipe.complexity)
                     },
-                    color = White,
-                    style = TextStyle(fontSize = 12.sp),
+                    color = MaterialTheme.colorScheme.secondary,
+                    style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(start = 16.dp),
                     textAlign = TextAlign.Start
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                //Spacer(modifier = Modifier.height(4.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    CompositionLocalProvider(LocalContentColor provides if (isFavouriteValue) Orange else White) {
+                    CompositionLocalProvider(LocalContentColor provides if (isFavouriteValue) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary) {
                         IconButton(
                             onClick = onFavouriteClicked,
                             modifier = Modifier.weight(1f)
@@ -361,17 +383,17 @@ fun showDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
         confirmButton = {
             Button(
                 onClick = onConfirm,
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
             ) {
-                Text("Delete", color = Color.White)
+                Text("Delete", color = White)
             }
         },
         dismissButton = {
             Button(
                 onClick = onDismiss,
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
             ) {
-                Text("Cancel", color = Color.White)
+                Text("Cancel", color = White)
             }
         }
     )

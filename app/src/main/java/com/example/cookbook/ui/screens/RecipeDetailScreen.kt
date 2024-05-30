@@ -2,6 +2,7 @@ package com.example.cookbook.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -11,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,6 +31,7 @@ import com.example.cookbook.data.models.User
 import com.example.cookbook.data.viewmodels.UserViewModel
 import com.example.cookbook.ui.theme.White
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecipeDetailScreen(
@@ -37,6 +40,7 @@ fun RecipeDetailScreen(
     userViewModel: UserViewModel
 ) {
     var user by remember { mutableStateOf<User?>(null) }
+    val currentUserId by userViewModel.currentUserId.observeAsState()
 
     LaunchedEffect(key1 = userViewModel, key2 = recipe.authorId) {
         val fetchedUser = userViewModel.getUserById(recipe.authorId)
@@ -55,19 +59,32 @@ fun RecipeDetailScreen(
             )
         },
         content = { padding ->
-            user?.let {
+            val currentUser = user
+            if (currentUser != null) {
                 UserDetail(
                     recipe = recipe,
-                    user = it,
-                    padding = padding
+                    user = currentUser,
+                    isCurrentUser = currentUserId == currentUser.userId,
+                    padding = padding,
+                    onUserClick = {
+                        navController.navigate("user/${currentUser.userId}")
+                    }
                 )
+            } else {
+                // You can add a loading or placeholder view here if needed
             }
         }
     )
 }
 
 @Composable
-fun UserDetail(recipe: Recipe, user: User, padding: PaddingValues) {
+fun UserDetail(
+    recipe: Recipe,
+    user: User,
+    isCurrentUser: Boolean,
+    padding: PaddingValues,
+    onUserClick: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -94,13 +111,14 @@ fun UserDetail(recipe: Recipe, user: User, padding: PaddingValues) {
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colorScheme.surface)
                 .padding(16.dp)
         ) {
             Column {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    modifier = Modifier
+                        .padding(bottom = 8.dp)
+                        .clickable(onClick = onUserClick)
                 ) {
                     Image(
                         painter = rememberAsyncImagePainter(
@@ -119,9 +137,17 @@ fun UserDetail(recipe: Recipe, user: User, padding: PaddingValues) {
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = user.username,
-                        color = White,
+                        color = MaterialTheme.colorScheme.secondary,
                         style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium)
                     )
+                    if (isCurrentUser) {
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "(You)",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                        )
+                    }
                 }
 
                 Text(
@@ -139,6 +165,7 @@ fun UserDetail(recipe: Recipe, user: User, padding: PaddingValues) {
         }
     }
 }
+
 
 @Composable
 fun DetailSection(title: String, detail: String) {

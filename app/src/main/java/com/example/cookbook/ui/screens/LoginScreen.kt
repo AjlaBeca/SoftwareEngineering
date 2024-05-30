@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -67,7 +68,8 @@ fun LoginScreen(navController: NavController, userViewModel: UserViewModel, modi
                     unfocusedIndicatorColor = Color.Transparent,
                     focusedTextColor = Gray,
                     cursorColor = Orange,
-                    focusedLabelColor = Orange
+                    focusedLabelColor = Orange,
+                    unfocusedPlaceholderColor = LighterGray
                 ),
                 shape = MaterialTheme.shapes.medium
             )
@@ -86,7 +88,8 @@ fun LoginScreen(navController: NavController, userViewModel: UserViewModel, modi
                     unfocusedIndicatorColor = Color.Transparent,
                     focusedTextColor = Gray,
                     cursorColor = Orange,
-                    focusedLabelColor = Orange
+                    focusedLabelColor = Orange,
+                    unfocusedPlaceholderColor = LighterGray
                 ),
                 shape = MaterialTheme.shapes.medium
             )
@@ -125,9 +128,10 @@ fun LoginScreen(navController: NavController, userViewModel: UserViewModel, modi
                     .fillMaxWidth()
                     .padding(top = 8.dp),
                 shape = MaterialTheme.shapes.medium,
-                colors = ButtonDefaults.buttonColors(containerColor = Orange)
+                colors = ButtonDefaults.buttonColors(containerColor = Orange),
             ) {
-                Text("Login", color = Color.White)
+                Text("Login", color = Color.White,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.ExtraBold),)
             }
             TextButton(
                 onClick = { navController.navigate("signup") },
