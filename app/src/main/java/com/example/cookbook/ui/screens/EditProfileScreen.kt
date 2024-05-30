@@ -34,7 +34,6 @@ import com.example.cookbook.R
 import com.example.cookbook.ui.theme.Orange
 import com.example.cookbook.ui.theme.White
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditProfileScreen(
@@ -210,7 +209,7 @@ fun EditProfileScreen(
 
             Button(
                 onClick = {
-                    if (!changePassword || currentUser?.password == oldPassword) {
+                    if (!changePassword || (currentUser?.password == oldPassword && isPasswordValid(newPassword))) {
                         val updatedUser = currentUser!!.copy(
                             username = username,
                             image = imageUri.toString(),
@@ -219,6 +218,8 @@ fun EditProfileScreen(
                         userViewModel.updateUserProfile(updatedUser)
                         navController.popBackStack()
                         errorMessage = ""
+                    } else if (changePassword && !isPasswordValid(newPassword)) {
+                        errorMessage = "Password must be at least 6 characters long, contain at least one number and one uppercase letter"
                     } else {
                         errorMessage = "Incorrect old password"
                     }
@@ -238,7 +239,6 @@ fun EditProfileScreen(
                     "Save Changes",
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.ExtraBold),
                 )
-
             }
 
             if (errorMessage.isNotEmpty()) {
@@ -264,4 +264,9 @@ private fun saveImageUriToPreferences(context: Context, userId: Long, uri: Uri) 
         putString("image_uri", uri.toString())
         apply()
     }
+}
+
+private fun isPasswordValid(password: String): Boolean {
+    val passwordRegex = "^(?=.*[0-9])(?=.*[A-Z]).{6,}$".toRegex()
+    return passwordRegex.matches(password)
 }

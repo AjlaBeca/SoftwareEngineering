@@ -41,6 +41,7 @@ import com.example.cookbook.ui.theme.White
 import com.example.cookbook.utils.SharedPreferencesUtil
 import kotlinx.coroutines.launch
 
+
 @Composable
 fun ProfileScreen(
     navController: NavHostController,
@@ -51,7 +52,6 @@ fun ProfileScreen(
     val coroutineScope = rememberCoroutineScope()
     val currentUserId by userViewModel.currentUserId.observeAsState()
     val userProfile by userViewModel.currentUser.observeAsState()
-
 
     if (currentUserId == null) {
         Text("Please log in to view your profile.")
@@ -120,7 +120,7 @@ fun ProfileScreen(
                 text = userProfile?.username ?: "USERNAME",
                 color = MaterialTheme.colorScheme.secondary,
                 textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.displayMedium,
+                style = MaterialTheme.typography.displaySmall,
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -235,7 +235,7 @@ fun ProfileScreen(
                                         showDeleteDialog = true
                                         recipeToDelete = recipe
                                     },
-                                    isUserRecipe = showUserRecipes
+                                    isUserRecipe = recipe.authorId == userId
                                 )
                             }
                             if (rowRecipes.size < 2) {

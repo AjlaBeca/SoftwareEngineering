@@ -9,7 +9,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
@@ -20,7 +19,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.MutableLiveData
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 import com.example.cookbook.R
@@ -52,6 +50,14 @@ fun UserScreen(
 
     LaunchedEffect(key1 = userViewModel, key2 = userId) {
         user = userViewModel.getUserById(userId)
+    }
+
+    LaunchedEffect(key1 = userRecipes) {
+        currentUserId?.let { currentUserIdNonNull ->
+            userRecipes.forEach { recipe ->
+                recipeViewModel.fetchInitialFavouriteStatus(recipe.recipeId ?: 0, currentUserIdNonNull)
+            }
+        }
     }
 
     user?.let { user ->
@@ -125,28 +131,30 @@ fun UserScreen(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 rowRecipes.forEach { recipe ->
-                                    val isFavouriteLiveData = recipeViewModel.isFavourite(recipe.recipeId ?: 0, userId)
-                                    RecipeItem(
-                                        recipe = recipe,
-                                        navController = navController,
-                                        modifier = Modifier.weight(1f),
-                                        recipeViewModel = recipeViewModel,
-                                        userViewModel = userViewModel,
-                                        userId = userId,
-                                        isFavourite = isFavouriteLiveData,
-                                        onFavouriteClicked = {
-                                            val recipeId = recipe.recipeId ?: 0
-                                            val isFav = isFavouriteLiveData.value ?: false
+                                    currentUserId?.let { currentUserIdNonNull ->
+                                        val isFavouriteLiveData = recipeViewModel.isFavourite(recipe.recipeId ?: 0, currentUserIdNonNull)
+                                        RecipeItem(
+                                            recipe = recipe,
+                                            navController = navController,
+                                            modifier = Modifier.weight(1f),
+                                            recipeViewModel = recipeViewModel,
+                                            userViewModel = userViewModel,
+                                            userId = currentUserIdNonNull,
+                                            isFavourite = isFavouriteLiveData,
+                                            onFavouriteClicked = {
+                                                val recipeId = recipe.recipeId ?: 0
+                                                val isFav = isFavouriteLiveData.value ?: false
 
-                                            if (isFav) {
-                                                recipeViewModel.deleteFavourite(Favourite(recipeId = recipeId, userId = userId))
-                                            } else {
-                                                recipeViewModel.addFavourite(Favourite(recipeId = recipeId, userId = userId))
-                                            }
-                                        },
-                                        onDeleteClicked = {},
-                                        isUserRecipe = true
-                                    )
+                                                if (isFav) {
+                                                    recipeViewModel.deleteFavourite(Favourite(recipeId = recipeId, userId = currentUserIdNonNull))
+                                                } else {
+                                                    recipeViewModel.addFavourite(Favourite(recipeId = recipeId, userId = currentUserIdNonNull))
+                                                }
+                                            },
+                                            onDeleteClicked = {},
+                                            isUserRecipe = false
+                                        )
+                                    }
                                 }
                                 if (rowRecipes.size < 2) {
                                     Spacer(modifier = Modifier.weight(1f))

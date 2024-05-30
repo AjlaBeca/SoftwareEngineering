@@ -26,7 +26,6 @@ import com.example.cookbook.data.viewmodels.UserViewModel
 import com.example.cookbook.ui.theme.*
 import com.example.cookbook.utils.SharedPreferencesUtil
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignUpScreen(
@@ -38,6 +37,11 @@ fun SignUpScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf("") }
+
+    fun isPasswordValid(password: String): Boolean {
+        val passwordRegex = "^(?=.*[0-9])(?=.*[A-Z]).{6,}$".toRegex()
+        return passwordRegex.matches(password)
+    }
 
     Box(
         modifier = modifier
@@ -143,6 +147,10 @@ fun SignUpScreen(
                                 errorMessage = "Please enter a valid email"
                             }
 
+                            !isPasswordValid(password) -> {
+                                errorMessage = "Password must be at least 6 characters long, contain at least one number and one uppercase letter"
+                            }
+
                             else -> {
                                 errorMessage = ""
                                 val existingUser = userViewModel.getUserByEmail(email)
@@ -197,8 +205,6 @@ fun SignUpScreen(
             ) {
                 Text("Already have an account? Sign In", color = White)
             }
-
-
         }
     }
 }

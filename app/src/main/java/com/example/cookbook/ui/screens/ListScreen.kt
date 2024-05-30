@@ -275,7 +275,7 @@ fun RecipeItem(
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.ExtraBold),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 16.dp, end = 16.dp, bottom = if (recipe.name.length > 20) 4.dp else 28.dp),
+                        .padding(start = 16.dp, end = 16.dp, bottom = if (recipe.name.length > 15) 4.dp else 24.dp),
                     textAlign = TextAlign.Start,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
@@ -307,7 +307,7 @@ fun RecipeItem(
                         Text(
                             text = it.username,
                             color = MaterialTheme.colorScheme.secondary,
-                            style = MaterialTheme.typography.bodyMedium
+                            style = MaterialTheme.typography.bodySmall
                         )
                     }
                 }
@@ -324,7 +324,7 @@ fun RecipeItem(
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 16.dp),
+                        .padding(start = 16.dp, end = 8.dp),
                     textAlign = TextAlign.Start
                 )
                 Text(
@@ -338,7 +338,7 @@ fun RecipeItem(
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 16.dp),
+                        .padding(start = 16.dp, end = 8.dp),
                     textAlign = TextAlign.Start
                 )
                 //Spacer(modifier = Modifier.height(4.dp))
@@ -357,7 +357,7 @@ fun RecipeItem(
                             )
                         }
                     }
-                    if (recipe.authorId == userId) {
+                    if (isUserRecipe) {
                         IconButton(
                             onClick = onDeleteClicked,
                             modifier = Modifier.weight(1f) // Use weight to align it to the end

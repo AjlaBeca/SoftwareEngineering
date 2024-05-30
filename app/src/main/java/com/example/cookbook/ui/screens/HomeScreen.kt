@@ -34,10 +34,11 @@ fun HomeScreen(navController: NavHostController, userViewModel: UserViewModel) {
         //horizontalAlignment = Alignment.CenterHorizontally
     ) {
         val text = buildAnnotatedString {
-            withStyle(style = MaterialTheme.typography.displaySmall.toSpanStyle().copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)) {
+            withStyle(style = MaterialTheme.typography.headlineLarge.toSpanStyle().copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)) {
                 append("Hello, ")
             }
-            withStyle(style = MaterialTheme.typography.displaySmall.toSpanStyle().copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)) {
+
+            withStyle(style = MaterialTheme.typography.headlineLarge.toSpanStyle().copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)) {
                 append(currentUser?.username ?: "")
             }
         }
