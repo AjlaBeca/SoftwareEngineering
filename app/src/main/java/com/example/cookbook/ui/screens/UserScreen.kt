@@ -34,6 +34,7 @@ fun UserScreen(
     recipeViewModel: RecipeViewModel
 ) {
     val currentUserId by userViewModel.currentUserId.observeAsState()
+    val recipeLikeCounts by recipeViewModel.recipeLikeCounts.observeAsState(listOf())
 
     if (currentUserId == userId) {
         LaunchedEffect(Unit) {
@@ -152,7 +153,8 @@ fun UserScreen(
                                                 }
                                             },
                                             onDeleteClicked = {},
-                                            isUserRecipe = false
+                                            isUserRecipe = false,
+                                            recipeLikeCounts = recipeLikeCounts
                                         )
                                     }
                                 }

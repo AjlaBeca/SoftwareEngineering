@@ -11,7 +11,6 @@ import com.example.cookbook.data.models.Recipe
 
 @Dao
 interface FavouriteDao {
-
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertFavourite(favourite: Favourite)
 
@@ -26,4 +25,12 @@ interface FavouriteDao {
 
     @Query("DELETE FROM Favourite WHERE recipeId = :recipeId")
     suspend fun deleteFavouritesByRecipeId(recipeId: Int)
+
+    @Query("SELECT recipeId, COUNT(*) as likeCount FROM Favourite GROUP BY recipeId")
+    fun getRecipeLikeCounts(): LiveData<List<RecipeLikeCount>>
 }
+
+data class RecipeLikeCount(
+    val recipeId: Int,
+    val likeCount: Int
+)

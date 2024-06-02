@@ -15,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -58,7 +59,8 @@ fun CookBookApp(userViewModel: UserViewModel, recipeViewModel: RecipeViewModel) 
         // Restore the current user ID if logged in
         LaunchedEffect(Unit) {
             if (isLoggedIn) {
-                userViewModel.currentUserId.value = SharedPreferencesUtil.getUserId(navController.context).takeIf { it != -1L }
+                userViewModel.currentUserId.value =
+                    SharedPreferencesUtil.getUserId(navController.context).takeIf { it != -1L }
             }
         }
 
@@ -91,7 +93,8 @@ fun MyApp(
 
     Scaffold(
         bottomBar = {
-            val currentDestination = navController.currentBackStackEntryAsState().value?.destination
+            val currentDestination =
+                navController.currentBackStackEntryAsState().value?.destination
             if (currentDestination?.route in listOf("home", "list", "profile")) {
                 BottomNavigationBar(navController)
             }
@@ -149,8 +152,13 @@ fun MyApp(
                     userViewModel.currentUserId.value ?: -1L
                 )
             }
+            composable("user/{userId}") { backStackEntry ->
+                val userId = backStackEntry.arguments?.getString("userId")?.toLong() ?: 0L
+                UserScreen(navController, userId, userViewModel, recipeViewModel)
+            }
             composable("profile/{userId}") { backStackEntry ->
-                val userId = backStackEntry.arguments?.getString("userId")?.toLongOrNull() ?: -1L
+                val userId =
+                    backStackEntry.arguments?.getString("userId")?.toLongOrNull() ?: -1L
                 ProfileScreen(navController, userViewModel, recipeViewModel, userId)
             }
             composable(
@@ -170,25 +178,80 @@ fun MyApp(
 
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
-    NavigationBar {
-        NavigationBarItem(
-            icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
-            label = { Text("Home") },
-            selected = currentRoute(navController) == "home",
-            onClick = { navigateTo(navController, "home") }
-        )
-        NavigationBarItem(
-            icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = "List") },
-            label = { Text("List") },
-            selected = currentRoute(navController) == "list",
-            onClick = { navigateTo(navController, "list") }
-        )
-        NavigationBarItem(
-            icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
-            label = { Text("Profile") },
-            selected = currentRoute(navController) == "profile",
-            onClick = { navigateTo(navController, "profile") }
-        )
+    Surface(
+        color = Color.Transparent,
+        contentColor = Color.Transparent
+    ) {
+        NavigationBar(containerColor = Color.Transparent) {
+
+            val secondaryColor =
+                MaterialTheme.colorScheme.secondary
+
+            NavigationBarItem(
+                icon = {
+                    Icon(
+                        Icons.Default.Home,
+                        contentDescription = "Home",
+                        tint = secondaryColor
+                    )
+                },
+                label = { Text("Home") },
+                selected = currentRoute(navController) == "home",
+                onClick = { navigateTo(navController, "home") },
+                colors = NavigationBarItemColors(
+                    selectedIconColor = MaterialTheme.colorScheme.primaryContainer,
+                    selectedTextColor = MaterialTheme.colorScheme.secondary,
+                    selectedIndicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                    unselectedIconColor = Color.DarkGray,
+                    unselectedTextColor = MaterialTheme.colorScheme.secondary,
+                    disabledIconColor = Color.DarkGray,
+                    disabledTextColor = MaterialTheme.colorScheme.secondary
+                )
+            )
+            NavigationBarItem(
+                icon = {
+                    Icon(
+                        Icons.AutoMirrored.Filled.List,
+                        contentDescription = "List",
+                        tint = secondaryColor
+                    )
+                },
+                label = { Text("List") },
+                selected = currentRoute(navController) == "list",
+                onClick = { navigateTo(navController, "list")
+                },
+                colors = NavigationBarItemColors(
+                    selectedIconColor = MaterialTheme.colorScheme.primaryContainer,
+                    selectedTextColor = MaterialTheme.colorScheme.secondary,
+                    selectedIndicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                    unselectedIconColor = Color.DarkGray,
+                    unselectedTextColor = MaterialTheme.colorScheme.secondary,
+                    disabledIconColor = Color.DarkGray,
+                    disabledTextColor = MaterialTheme.colorScheme.secondary
+                )
+            )
+            NavigationBarItem(
+                icon = {
+                    Icon(
+                        Icons.Default.Person,
+                        contentDescription = "Profile",
+                        tint = secondaryColor
+                    )
+                },
+                label = { Text("Profile") },
+                selected = currentRoute(navController) == "profile",
+                onClick = { navigateTo(navController, "profile") },
+                colors = NavigationBarItemColors(
+                    selectedIconColor = MaterialTheme.colorScheme.primaryContainer,
+                    selectedTextColor = MaterialTheme.colorScheme.secondary,
+                    selectedIndicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                    unselectedIconColor = Color.DarkGray,
+                    unselectedTextColor = MaterialTheme.colorScheme.secondary,
+                    disabledIconColor = Color.DarkGray,
+                    disabledTextColor = MaterialTheme.colorScheme.secondary
+                )
+            )
+        }
     }
 }
 

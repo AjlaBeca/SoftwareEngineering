@@ -297,7 +297,7 @@ fun DropdownMenuComplexity(selectedComplexity: String, onComplexitySelected: (St
                 DropdownMenuItem(
                     text = { Text(complexity) },
                     onClick = {
-                        onComplexitySelected(complexity) // Update the selected complexity
+                        onComplexitySelected(complexity)
                         expanded = false
                     }
                 )
@@ -340,7 +340,7 @@ fun DropdownMenuCategory(selectedCategory: String, onCategorySelected: (String) 
                 DropdownMenuItem(
                     text = { Text(category) },
                     onClick = {
-                        onCategorySelected(category) // Update the selected category
+                        onCategorySelected(category)
                         expanded = false
                     }
                 )

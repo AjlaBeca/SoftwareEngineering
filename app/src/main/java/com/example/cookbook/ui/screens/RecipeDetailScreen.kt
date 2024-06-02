@@ -71,7 +71,7 @@ fun RecipeDetailScreen(
                     }
                 )
             } else {
-                // You can add a loading or placeholder view here if needed
+                // Nothing
             }
         }
     )

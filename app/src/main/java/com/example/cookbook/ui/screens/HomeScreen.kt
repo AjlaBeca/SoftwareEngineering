@@ -31,7 +31,6 @@ fun HomeScreen(navController: NavHostController, userViewModel: UserViewModel) {
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
-        //horizontalAlignment = Alignment.CenterHorizontally
     ) {
         val text = buildAnnotatedString {
             withStyle(style = MaterialTheme.typography.headlineLarge.toSpanStyle().copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)) {
@@ -63,13 +62,13 @@ fun CategoryButton(navController: NavHostController, category: String, imageResI
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(130.dp) // Set a fixed height for consistent button size
+            .height(130.dp)
             .padding(horizontal = 20.dp)
     ) {
         Image(
-            painter = painterResource(id = imageResId), // Load the image using painterResource
+            painter = painterResource(id = imageResId),
             contentDescription = null,
-            contentScale = ContentScale.Crop, // Crop the image to fill the space
+            contentScale = ContentScale.Crop,
             modifier = Modifier
                 .fillMaxSize()
                 .clip(RoundedCornerShape(10.dp))
@@ -78,7 +77,7 @@ fun CategoryButton(navController: NavHostController, category: String, imageResI
             modifier = Modifier
                 .fillMaxSize()
                 .clip(RoundedCornerShape(10.dp))
-                .background(Color.Black.copy(alpha = 0.4f)) // Semi-transparent overlay
+                .background(Color.Black.copy(alpha = 0.4f))
                 .padding(vertical = 20.dp)
         )
         Button(

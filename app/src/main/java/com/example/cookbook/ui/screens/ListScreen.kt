@@ -50,9 +50,11 @@ import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
 import com.example.cookbook.R
+import com.example.cookbook.data.dao.RecipeLikeCount
 import com.example.cookbook.data.models.Favourite
 import com.example.cookbook.data.models.User
 import com.example.cookbook.data.viewmodels.UserViewModel
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ListScreen(
@@ -73,6 +75,7 @@ fun ListScreen(
 
     var showDeleteDialog by remember { mutableStateOf(false) }
     var recipeToDelete by remember { mutableStateOf<Recipe?>(null) }
+    val recipeLikeCounts by recipeViewModel.recipeLikeCounts.observeAsState(listOf())
 
     val filteredRecipes = allRecipes.filter { recipe ->
         searchText.isEmpty() || recipe.name.contains(searchText, ignoreCase = true)
@@ -125,7 +128,10 @@ fun ListScreen(
                                 focusManager.clearFocus() // Clear focus here
                             }
                         ) {
-                            Icon(imageVector = Icons.Default.Close, contentDescription = "Clear search")
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Clear search"
+                            )
                         }
                     }
                 },
@@ -155,7 +161,8 @@ fun ListScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         rowRecipes.forEach { recipe ->
-                            val isFavouriteLiveData = recipeViewModel.isFavourite(recipe.recipeId ?: 0, userId)
+                            val isFavouriteLiveData =
+                                recipeViewModel.isFavourite(recipe.recipeId ?: 0, userId)
                             RecipeItem(
                                 recipe = recipe,
                                 navController = navController,
@@ -169,16 +176,27 @@ fun ListScreen(
                                     val isFav = isFavouriteLiveData.value ?: false
 
                                     if (isFav) {
-                                        recipeViewModel.deleteFavourite(Favourite(recipeId = recipeId, userId = userId))
+                                        recipeViewModel.deleteFavourite(
+                                            Favourite(
+                                                recipeId = recipeId,
+                                                userId = userId
+                                            )
+                                        )
                                     } else {
-                                        recipeViewModel.addFavourite(Favourite(recipeId = recipeId, userId = userId))
+                                        recipeViewModel.addFavourite(
+                                            Favourite(
+                                                recipeId = recipeId,
+                                                userId = userId
+                                            )
+                                        )
                                     }
                                 },
                                 onDeleteClicked = {
                                     showDeleteDialog = true
                                     recipeToDelete = recipe
                                 },
-                                isUserRecipe = false
+                                isUserRecipe = false,
+                                recipeLikeCounts = recipeLikeCounts
                             )
                         }
                         if (rowRecipes.size < 2) {
@@ -228,16 +246,19 @@ fun RecipeItem(
     isFavourite: LiveData<Boolean>,
     onFavouriteClicked: () -> Unit,
     onDeleteClicked: () -> Unit,
-    isUserRecipe: Boolean
+    isUserRecipe: Boolean,
+    recipeLikeCounts: List<RecipeLikeCount>
 ) {
     val recipeId = recipe.recipeId ?: 0
-    val isFavouriteValue by isFavourite.observeAsState(false) // Ensure initial state is false
+    val isFavouriteValue by isFavourite.observeAsState(false)
     var user by remember { mutableStateOf<User?>(null) }
 
     // Fetch user details
     LaunchedEffect(key1 = userViewModel, key2 = recipe.authorId) {
         user = userViewModel.getUserById(recipe.authorId)
     }
+
+    val likeCount = recipeLikeCounts.find { it.recipeId == recipeId }?.likeCount ?: 0
 
     Box(
         modifier = modifier
@@ -252,7 +273,10 @@ fun RecipeItem(
                 .fillMaxSize()
                 .clip(shape = RoundedCornerShape(10.dp))
                 .background(MaterialTheme.colorScheme.primaryContainer)
-                .border(border = BorderStroke(1.dp, MaterialTheme.colorScheme.primaryContainer), shape = RoundedCornerShape(10.dp)),
+                .border(
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primaryContainer),
+                    shape = RoundedCornerShape(10.dp)
+                ),
         ) {
             Column(
                 horizontalAlignment = Alignment.Start,
@@ -275,7 +299,11 @@ fun RecipeItem(
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.ExtraBold),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 16.dp, end = 16.dp, bottom = if (recipe.name.length > 15) 4.dp else 24.dp),
+                        .padding(
+                            start = 16.dp,
+                            end = 16.dp,
+                            bottom = if (recipe.name.length > 15) 4.dp else 24.dp
+                        ),
                     textAlign = TextAlign.Start,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
@@ -344,26 +372,41 @@ fun RecipeItem(
                     )
                 }
 
-                //Spacer(modifier = Modifier.height(4.dp))
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 26.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = if (isUserRecipe) Arrangement.SpaceBetween else Arrangement.Center
                 ) {
                     CompositionLocalProvider(LocalContentColor provides if (isFavouriteValue) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary) {
-                        IconButton(
-                            onClick = onFavouriteClicked,
-                            modifier = Modifier.weight(1f)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+
                         ) {
-                            Icon(
-                                imageVector = if (isFavouriteValue) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                contentDescription = if (isFavouriteValue) "Unlike Recipe" else "Like Recipe",
+                            IconButton(
+                                onClick = onFavouriteClicked,
                                 modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (isFavouriteValue) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                    contentDescription = if (isFavouriteValue) "Unlike Recipe" else "Like Recipe"
+                                )
+                            }
+                            Text(
+                                text = likeCount.toString(),
+                                color = MaterialTheme.colorScheme.secondary,
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.padding(start = 4.dp)
                             )
                         }
                     }
+
                     if (isUserRecipe) {
                         IconButton(
                             onClick = onDeleteClicked,
-                            modifier = Modifier.weight(1f) // Use weight to align it to the end
+                            modifier = Modifier
+                                .size(24.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
@@ -377,27 +420,27 @@ fun RecipeItem(
     }
 }
 
-@Composable
-fun showDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Delete Recipe") },
-        text = { Text("Are you sure you want to delete this recipe?") },
-        confirmButton = {
-            Button(
-                onClick = onConfirm,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-            ) {
-                Text("Delete", color = White)
-            }
-        },
-        dismissButton = {
-            Button(
-                onClick = onDismiss,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-            ) {
-                Text("Cancel", color = White)
-            }
+        @Composable
+        fun showDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+            AlertDialog(
+                onDismissRequest = onDismiss,
+                title = { Text("Delete Recipe") },
+                text = { Text("Are you sure you want to delete this recipe?") },
+                confirmButton = {
+                    Button(
+                        onClick = onConfirm,
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        Text("Delete", color = White)
+                    }
+                },
+                dismissButton = {
+                    Button(
+                        onClick = onDismiss,
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                    ) {
+                        Text("Cancel", color = White)
+                    }
+                }
+            )
         }
-    )
-}

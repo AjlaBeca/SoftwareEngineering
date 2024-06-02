@@ -2,6 +2,7 @@ package com.example.cookbook.data.repositories
 
 import androidx.lifecycle.LiveData
 import com.example.cookbook.data.dao.FavouriteDao
+import com.example.cookbook.data.dao.RecipeLikeCount
 import com.example.cookbook.data.models.Favourite
 import com.example.cookbook.data.models.Recipe
 
@@ -25,5 +26,9 @@ class FavouriteRepository(private val favouriteDao: FavouriteDao) {
 
     suspend fun deleteFavouritesByRecipeId(recipeId: Int) {
         favouriteDao.deleteFavouritesByRecipeId(recipeId)
+    }
+
+    fun getRecipeLikeCounts(): LiveData<List<RecipeLikeCount>> {
+        return favouriteDao.getRecipeLikeCounts()
     }
 }

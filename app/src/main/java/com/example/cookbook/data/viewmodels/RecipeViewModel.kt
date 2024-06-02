@@ -12,6 +12,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.cookbook.R
 import com.example.cookbook.data.AppDatabase
+import com.example.cookbook.data.dao.RecipeLikeCount
 import com.example.cookbook.data.models.Favourite
 import com.example.cookbook.data.models.Recipe
 import com.example.cookbook.data.repositories.FavouriteRepository
@@ -24,8 +25,8 @@ class RecipeViewModel(
 ) : ViewModel() {
     val readAllData: LiveData<List<Recipe>> = recipeRepository.readAllData
 
+    val recipeLikeCounts: LiveData<List<RecipeLikeCount>> = favouriteRepository.getRecipeLikeCounts()
     private val _isFavourite = MutableLiveData<Boolean>()
-    //val isFavourite: LiveData<Boolean> get() = _isFavourite
 
     fun fetchInitialFavouriteStatus(recipeId: Int, userId: Long) {
         viewModelScope.launch {

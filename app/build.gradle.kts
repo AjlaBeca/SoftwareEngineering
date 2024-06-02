@@ -81,6 +81,7 @@ dependencies {
     implementation("androidx.compose.runtime:runtime-livedata:1.6.7")
     implementation("androidx.compose.foundation:foundation-layout-android:1.6.7")
     implementation(libs.androidx.databinding.compiler)
+    implementation(libs.androidx.ui.text.google.fonts)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -90,6 +91,8 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
+
+    implementation ("com.google.accompanist:accompanist-systemuicontroller:0.24.3-alpha")
 
     implementation ("androidx.compose.ui:ui-tooling:1.1.0-SNAPSHOT")
 

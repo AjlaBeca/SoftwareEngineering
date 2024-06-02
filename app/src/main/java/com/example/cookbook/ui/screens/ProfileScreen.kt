@@ -52,6 +52,7 @@ fun ProfileScreen(
     val coroutineScope = rememberCoroutineScope()
     val currentUserId by userViewModel.currentUserId.observeAsState()
     val userProfile by userViewModel.currentUser.observeAsState()
+    val recipeLikeCounts by recipeViewModel.recipeLikeCounts.observeAsState(listOf())
 
     if (currentUserId == null) {
         Text("Please log in to view your profile.")
@@ -235,7 +236,8 @@ fun ProfileScreen(
                                         showDeleteDialog = true
                                         recipeToDelete = recipe
                                     },
-                                    isUserRecipe = recipe.authorId == userId
+                                    isUserRecipe = recipe.authorId == userId,
+                                    recipeLikeCounts = recipeLikeCounts
                                 )
                             }
                             if (rowRecipes.size < 2) {

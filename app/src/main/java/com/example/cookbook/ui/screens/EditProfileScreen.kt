@@ -134,7 +134,7 @@ fun EditProfileScreen(
                 }
             }
 
-            // Toggle for Change Username
+
             Text(
                 text = "Change Username >",
                 color = MaterialTheme.colorScheme.secondary,
@@ -163,7 +163,7 @@ fun EditProfileScreen(
                 )
             }
 
-            // Toggle for Change Password
+
             Text(
                 text = "Change Password >",
                 color = MaterialTheme.colorScheme.secondary,
