@@ -21,7 +21,8 @@ CookBook is a mobile application developed in Kotlin using Jetpack Compose, desi
 - Profile Customization - Change profile picture, username, and password
 
 **🎨 Figma Prototype**
-You can check out our design prototype on Figma: https://www.figma.com/design/uuX5TJaHOLyN4HTo35Lj6A/Untitled?node-id=0-1&t=SBCqyaWNR6elsVmd-1
+You can check out our design prototype on Figma: 
+https://www.figma.com/design/uuX5TJaHOLyN4HTo35Lj6A/Untitled?node-id=0-1&t=SBCqyaWNR6elsVmd-1
 
 🤝 Team & Contributors
 - Ajla Beća
