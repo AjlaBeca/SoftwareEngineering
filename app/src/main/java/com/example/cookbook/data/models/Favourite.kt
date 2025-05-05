@@ -1,18 +1,12 @@
+// Update Favourite.kt
 package com.example.cookbook.data.models
 
-import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.PrimaryKey
-@Entity(
-    foreignKeys = [ForeignKey(
-        entity = Recipe::class,
-        parentColumns = ["recipeId"],
-        childColumns = ["recipeId"],
-        onDelete = ForeignKey.CASCADE
-    )]
-)
+import com.google.firebase.firestore.DocumentId
+
 data class Favourite(
-    @PrimaryKey(autoGenerate = true) val favouriteId: Long = 0,
-    val recipeId: Int,
-    val userId: Long
+    @DocumentId val documentId: String = "", // Firestore document ID
+    val favouriteId: Long = 0,
+    val recipeId: Int = 0,
+    val userId: Long = 0,
+    val createdAt: Long = System.currentTimeMillis()
 )

@@ -1,6 +1,7 @@
 package com.example.cookbook
 
 import RecipeViewModel
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -29,7 +30,9 @@ import com.example.cookbook.data.models.Recipe
 import com.example.cookbook.data.viewmodels.UserViewModel
 import com.example.cookbook.ui.screens.*
 import com.example.cookbook.ui.theme.CookBookTheme
+import com.example.cookbook.utils.RoomToFirebaseMigrator
 import com.example.cookbook.utils.SharedPreferencesUtil
+import com.google.firebase.FirebaseApp
 
 class MainActivity : ComponentActivity() {
     private val TAG = "MainActivity"
@@ -46,6 +49,34 @@ class MainActivity : ComponentActivity() {
         setContent {
             CookBookApp(userViewModel, recipeViewModel)
         }
+    }
+}
+override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+
+    // Initialize Firebase
+    FirebaseApp.initializeApp(this)
+
+    // Check if migration is needed
+    val sharedPrefs = getSharedPreferences("migration_prefs", Context.MODE_PRIVATE)
+    val migrationCompleted = sharedPrefs.getBoolean("firebase_migration_completed", false)
+
+    if (!migrationCompleted) {
+        lifecycleScope.launch {
+            val migrator = RoomToFirebaseMigrator(applicationContext)
+            try {
+                migrator.migrateAllData()
+                // Mark migration as completed
+                sharedPrefs.edit().putBoolean("firebase_migration_completed", true).apply()
+            } catch (e: Exception) {
+                Log.e(TAG, "Migration failed", e)
+            }
+        }
+    }
+
+    Log.d(TAG, "onCreate: UserViewModel initialized successfully")
+    setContent {
+        CookBookApp(userViewModel, recipeViewModel)
     }
 }
 

@@ -3,74 +3,84 @@ package com.example.cookbook.data.viewmodels
 import android.app.Application
 import androidx.lifecycle.*
 import androidx.lifecycle.viewmodel.CreationExtras
+import com.example.cookbook.data.firebase.FirebaseAuthManager
 import com.example.cookbook.data.models.User
-import com.example.cookbook.data.repositories.UserRepository
 import com.example.cookbook.utils.SharedPreferencesUtil
 import kotlinx.coroutines.launch
+import com.google.firebase.auth.FirebaseAuth
 
 class UserViewModel(application: Application) : AndroidViewModel(application) {
-    private val repository: UserRepository = UserRepository(application)
-    val readAllData: LiveData<List<User>> = repository.readAllData
+    private val authManager = FirebaseAuthManager()
+    private val auth = FirebaseAuth.getInstance()
+
     val currentUserId: MutableLiveData<Long?> = MutableLiveData(
         SharedPreferencesUtil.getUserId(application).takeIf { it != -1L }
     )
+
     val isLoggedIn = MutableLiveData(SharedPreferencesUtil.isLoggedIn(application))
 
     private val _currentUser = MutableLiveData<User?>()
     val currentUser: LiveData<User?> get() = _currentUser
 
     init {
-        currentUserId.observeForever { userId ->
+        // Set up auth state listener
+        auth.addAuthStateListener { firebaseAuth ->
+            val firebaseUser = firebaseAuth.currentUser
+            isLoggedIn.value = firebaseUser != null
+            currentUserId.value = firebaseUser?.uid?.hashCode()?.toLong()
+
             viewModelScope.launch {
-                _currentUser.value = userId?.let { getUserById(it) }
+                _currentUser.value = if (firebaseUser != null) {
+                    getUserById(firebaseUser.uid.hashCode().toLong())
+                } else {
+                    null
+                }
             }
         }
     }
 
     suspend fun addUser(user: User): Boolean {
         return try {
-            repository.addUser(user)
-            true
+            val result = authManager.signUp(user.email, user.password, user.username)
+            result != null
         } catch (e: Exception) {
             false
         }
     }
 
     suspend fun login(email: String, password: String): User? {
-        val user = repository.getUserByEmail(email)?.takeIf { it.password == password }
-        if (user != null) {
-            currentUserId.postValue(user.userId)
-            SharedPreferencesUtil.setLoggedIn(getApplication(), true, user.userId)
-            isLoggedIn.postValue(true)
-        }
-        return user
+        return authManager.login(email, password)
     }
 
     fun logout() {
-        currentUserId.postValue(null)
-        SharedPreferencesUtil.setLoggedIn(getApplication(), false)
-        isLoggedIn.postValue(false)
+        authManager.signOut()
     }
 
     suspend fun getUserByEmail(email: String): User? {
-        return repository.getUserByEmail(email)
+        // Firebase Auth doesn't have a direct method to get user by email
+        // You'd need to query Firestore if you want to keep this functionality
+        return null
     }
 
     suspend fun getUserById(userId: Long): User? {
-        return repository.getUserById(userId)
+        // Convert Long userId to Firebase UID string
+        // This is an approximation and might need adjustment
+        val userIdString = userId.toString()
+        return authManager.getUserById(userIdString)
     }
 
     fun updateUserProfile(updatedUser: User) {
         viewModelScope.launch {
-            repository.updateUser(updatedUser)
+            authManager.updateProfile(updatedUser)
             refreshCurrentUser()
         }
     }
 
     fun refreshCurrentUser() {
-        currentUserId.value?.let {
+        val firebaseUser = auth.currentUser
+        if (firebaseUser != null) {
             viewModelScope.launch {
-                _currentUser.value = getUserById(it)
+                _currentUser.value = getUserById(firebaseUser.uid.hashCode().toLong())
             }
         }
     }

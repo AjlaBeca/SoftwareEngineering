@@ -26,9 +26,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.media3.common.util.Log
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
+import com.android.identity.util.UUID
 import com.example.cookbook.data.viewmodels.UserViewModel
 import com.example.cookbook.R
 import com.example.cookbook.ui.theme.Orange
@@ -66,8 +68,22 @@ fun EditProfileScreen(
                     uri,
                     Intent.FLAG_GRANT_READ_URI_PERMISSION
                 )
-                imageUri = uri
-                saveImageUriToPreferences(context, currentUser?.userId ?: 0, uri)
+
+                viewModelScope.launch {
+                    // Upload image to Firebase Storage
+                    val storageRef = FirebaseStorage.getInstance().reference
+                        .child("profile_images/${auth.currentUser?.uid ?: UUID.randomUUID()}")
+
+                    try {
+                        storageRef.putFile(uri).await()
+                        val downloadUrl = storageRef.downloadUrl.await().toString()
+
+                        // Update imageUri with Firebase Storage URL
+                        imageUri = Uri.parse(downloadUrl)
+                    } catch (e: Exception) {
+                        Log.e("EditProfile", "Error uploading image: ${e.message}")
+                    }
+                }
             }
         }
 

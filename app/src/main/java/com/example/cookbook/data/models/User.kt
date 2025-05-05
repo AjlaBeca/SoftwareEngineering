@@ -1,13 +1,14 @@
+// Update User.kt
 package com.example.cookbook.data.models
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
+import com.google.firebase.firestore.DocumentId
 
-@Entity(tableName = "users")
 data class User(
-    @PrimaryKey(autoGenerate = true) val userId: Long = 0,
-    var email: String,
-    var password: String,
-    var username: String,
-    val image: String? = null
+    @DocumentId val documentId: String = "", // Firestore document ID
+    val userId: Long = 0,
+    var email: String = "",
+    var password: String = "", // Note: Only stored temporarily
+    var username: String = "",
+    val image: String? = null,
+    val createdAt: Long = System.currentTimeMillis()
 )

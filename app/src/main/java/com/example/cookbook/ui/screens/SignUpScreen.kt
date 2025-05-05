@@ -153,33 +153,23 @@ fun SignUpScreen(
 
                             else -> {
                                 errorMessage = ""
-                                val existingUser = userViewModel.getUserByEmail(email)
-                                if (existingUser == null) {
-                                    val signUpSuccess = userViewModel.addUser(
-                                        User(
-                                            email = email,
-                                            password = password,
-                                            username = username,
-                                            image = null
-                                        )
+                                // Create a user object - note Firebase will handle the email uniqueness check
+                                val signUpSuccess = userViewModel.addUser(
+                                    User(
+                                        email = email,
+                                        password = password, // This will be used for auth only
+                                        username = username,
+                                        image = null
                                     )
-                                    if (signUpSuccess) {
-                                        val user = userViewModel.getUserByEmail(email)
-                                        if (user != null) {
-                                            SharedPreferencesUtil.setLoggedIn(
-                                                navController.context,
-                                                true,
-                                                user.userId
-                                            )
-                                            navController.navigate("login")
-                                        } else {
-                                            errorMessage = "Failed to sign up. Please try again."
-                                        }
-                                    } else {
-                                        errorMessage = "Failed to sign up. Please try again."
+                                )
+
+                                if (signUpSuccess) {
+                                    // Firebase Auth has already logged the user in
+                                    navController.navigate("home") {
+                                        popUpTo("login") { inclusive = true }
                                     }
                                 } else {
-                                    errorMessage = "Email already in use. Please log in."
+                                    errorMessage = "Failed to sign up. Email may already be in use or service unavailable."
                                 }
                             }
                         }

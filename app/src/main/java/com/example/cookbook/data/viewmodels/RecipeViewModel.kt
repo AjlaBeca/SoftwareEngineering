@@ -1,38 +1,25 @@
 import android.app.Application
 import android.net.Uri
 import android.util.Log
-import androidx.compose.runtime.State
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
-import com.example.cookbook.R
-import com.example.cookbook.data.AppDatabase
 import com.example.cookbook.data.dao.RecipeLikeCount
 import com.example.cookbook.data.models.Favourite
 import com.example.cookbook.data.models.Recipe
-import com.example.cookbook.data.repositories.FavouriteRepository
-import com.example.cookbook.data.repositories.RecipeRepository
+import com.example.cookbook.data.repositories.FirebaseFavouriteRepository
+import com.example.cookbook.data.repositories.FirebaseRecipeRepository
 import kotlinx.coroutines.launch
 
 class RecipeViewModel(
-    private val recipeRepository: RecipeRepository,
-    private val favouriteRepository: FavouriteRepository
+    private val recipeRepository: FirebaseRecipeRepository,
+    private val favouriteRepository: FirebaseFavouriteRepository
 ) : ViewModel() {
-    val readAllData: LiveData<List<Recipe>> = recipeRepository.readAllData
+    val readAllData: LiveData<List<Recipe>> = recipeRepository.getAllRecipes()
 
     val recipeLikeCounts: LiveData<List<RecipeLikeCount>> = favouriteRepository.getRecipeLikeCounts()
     private val _isFavourite = MutableLiveData<Boolean>()
 
     fun fetchInitialFavouriteStatus(recipeId: Int, userId: Long) {
-        viewModelScope.launch {
-            val favouriteStatus = favouriteRepository.isFavourite(recipeId, userId)
-            _isFavourite.postValue(favouriteStatus.value)
-        }
+        // The Firebase repository handles this with LiveData
     }
 
     fun addFavourite(favourite: Favourite) {
@@ -64,7 +51,7 @@ class RecipeViewModel(
     }
 
     fun getAllRecipes(): LiveData<List<Recipe>> {
-        return recipeRepository.readAllData
+        return recipeRepository.getAllRecipes()
     }
 
     var recipeName by mutableStateOf("")
@@ -126,9 +113,6 @@ class RecipeViewModel(
         return isValid
     }
 
-    private val placeholderImageUri: Uri? =
-        Uri.parse("android.resource://com.example.cookbook/${R.drawable.placeholder}")
-
     fun addRecipe(authorId: Long) {
         val newRecipe = Recipe(
             name = recipeName,
@@ -139,11 +123,12 @@ class RecipeViewModel(
             servings = recipeServings,
             authorId = authorId,
             categoryId = recipeCategoryId,
-            imagePath = recipeImageUri?.toString() ?: placeholderImageUri?.toString(),
+            imagePath = null // Will be set by the repository
         )
+
         viewModelScope.launch {
             try {
-                recipeRepository.addRecipe(newRecipe)
+                recipeRepository.addRecipe(newRecipe, recipeImageUri)
                 resetFields()
             } catch (e: Exception) {
                 Log.e("RecipeViewModel", "Error adding recipe: ${e.message}")
@@ -173,11 +158,8 @@ class RecipeViewModel(
     class RecipeViewModelFactory(private val application: Application) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(RecipeViewModel::class.java)) {
-                val db = AppDatabase.getDatabase(application)
-                val recipeDao = db.recipeDao()
-                val favouriteDao = db.favouriteDao()
-                val recipeRepository = RecipeRepository(recipeDao)
-                val favouriteRepository = FavouriteRepository(favouriteDao)
+                val recipeRepository = FirebaseRecipeRepository()
+                val favouriteRepository = FirebaseFavouriteRepository()
                 @Suppress("UNCHECKED_CAST")
                 return RecipeViewModel(recipeRepository, favouriteRepository) as T
             }
