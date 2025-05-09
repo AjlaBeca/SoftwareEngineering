@@ -9,14 +9,21 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.storage.FirebaseStorage
+import com.example.cookbook.data.models.RecipeLikeCount
 import kotlinx.coroutines.tasks.await
 import com.example.cookbook.data.models.Recipe
 import java.util.UUID
+import androidx.lifecycle.*
+import kotlinx.coroutines.*
+
 
 class FirebaseRecipeRepository {
     private val firestore = FirebaseFirestore.getInstance()
     private val storage = FirebaseStorage.getInstance()
     private val auth = FirebaseAuth.getInstance()
+
+    val recipeRepository = FirebaseRecipeRepository()
+    val favouriteRepository = FirebaseFavouriteRepository()
 
     private val recipesCollection = firestore.collection("recipes")
     private val storageRef = storage.reference.child("recipe_images")

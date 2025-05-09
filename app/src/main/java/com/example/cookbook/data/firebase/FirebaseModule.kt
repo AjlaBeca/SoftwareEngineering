@@ -2,8 +2,6 @@ package com.example.cookbook.data.firebase
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.functions.dagger.Module
-import com.google.firebase.functions.dagger.Provides
 import com.google.firebase.storage.FirebaseStorage
 import dagger.Module
 import dagger.Provides

@@ -1,145 +1,117 @@
-// Create FirebaseFavouriteRepository.kt
+// FirebaseFavouriteRepository.kt
 package com.example.cookbook.data.repositories
 
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.tasks.await
 import com.example.cookbook.data.models.Favourite
 import com.example.cookbook.data.models.Recipe
-import com.example.cookbook.data.dao.RecipeLikeCount
+import com.example.cookbook.data.models.RecipeLikeCount
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
+
 
 class FirebaseFavouriteRepository {
     private val firestore = FirebaseFirestore.getInstance()
-    private val favouritesCollection = firestore.collection("favourites")
-    private val recipesCollection = firestore.collection("recipes")
+    private val favourites = firestore.collection("favourites")
+    private val recipes   = firestore.collection("recipes")
 
-    // Add favourite
-    suspend fun addFavourite(favourite: Favourite): Boolean {
-        return try {
-            val favouriteId = "${favourite.recipeId}_${favourite.userId}"
-            favouritesCollection.document(favouriteId).set(favourite).await()
-            true
-        } catch (e: Exception) {
-            Log.e("FirebaseFavourite", "Error adding favourite", e)
-            false
-        }
+    // Add a favourite
+    suspend fun addFavourite(fav: Favourite): Boolean = try {
+        val id = "${fav.recipeId}_${fav.userId}"
+        favourites.document(id).set(fav).await()
+        true
+    } catch (e: Exception) {
+        Log.e("FavRepo", "addFavourite failed", e)
+        false
     }
 
-    // Delete favourite
-    suspend fun deleteFavourite(favourite: Favourite): Boolean {
-        return try {
-            val favouriteId = "${favourite.recipeId}_${favourite.userId}"
-            favouritesCollection.document(favouriteId).delete().await()
-            true
-        } catch (e: Exception) {
-            Log.e("FirebaseFavourite", "Error deleting favourite", e)
-            false
-        }
+    // Delete a favourite
+    suspend fun deleteFavourite(fav: Favourite): Boolean = try {
+        val id = "${fav.recipeId}_${fav.userId}"
+        favourites.document(id).delete().await()
+        true
+    } catch (e: Exception) {
+        Log.e("FavRepo", "deleteFavourite failed", e)
+        false
     }
 
-    // Check if recipe is favourited by user
+    // Observe single favourite state
     fun isFavourite(recipeId: Int, userId: Long): LiveData<Boolean> {
-        val isFavouriteLiveData = MutableLiveData<Boolean>()
-
-        val favouriteId = "${recipeId}_${userId}"
-        favouritesCollection.document(favouriteId).addSnapshotListener { snapshot, error ->
-            if (error != null) {
-                Log.e("FirebaseFavourite", "Error checking favourite status", error)
-                return@addSnapshotListener
+        val live = MutableLiveData<Boolean>()
+        val id = "${recipeId}_$userId"
+        favourites.document(id)
+            .addSnapshotListener { snap, err ->
+                if (err != null) {
+                    Log.e("FavRepo", "isFavourite error", err)
+                    return@addSnapshotListener
+                }
+                live.value = snap?.exists() == true
             }
-
-            isFavouriteLiveData.value = snapshot?.exists() ?: false
-        }
-
-        return isFavouriteLiveData
+        return live
     }
 
-    // Get user's favourite recipes
+    // Get all recipes this user has favourited
     fun getUserFavourites(userId: Long): LiveData<List<Recipe>> {
-        val favouritesLiveData = MutableLiveData<List<Recipe>>()
-
-        favouritesCollection
+        val liveRecipes = MutableLiveData<List<Recipe>>()
+        favourites
             .whereEqualTo("userId", userId)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    Log.e("FirebaseFavourite", "Error fetching user favourites", error)
+            .addSnapshotListener { snap, err ->
+                if (err != null) {
+                    Log.e("FavRepo", "getUserFavourites error", err)
+                    liveRecipes.value = emptyList()
                     return@addSnapshotListener
                 }
-
-                val favourites = snapshot?.documents?.mapNotNull {
-                    it.toObject(Favourite::class.java)
-                } ?: emptyList()
-
-                if (favourites.isEmpty()) {
-                    favouritesLiveData.value = emptyList()
-                    return@addSnapshotListener
-                }
-
-                // Get all recipe IDs from favourites
-                val recipeIds = favourites.map { it.recipeId }
-
-                // Fetch recipes with these IDs
-                recipesCollection
-                    .whereIn("recipeId", recipeIds)
-                    .get()
-                    .addOnSuccessListener { querySnapshot ->
-                        val recipes = querySnapshot.documents.mapNotNull {
-                            it.toObject(Recipe::class.java)
+                val favList = snap?.documents
+                    ?.mapNotNull { it.toObject(Favourite::class.java) }
+                    ?: emptyList()
+                if (favList.isEmpty()) {
+                    liveRecipes.value = emptyList()
+                } else {
+                    // fetch matching recipes
+                    val ids = favList.map { it.recipeId }
+                    recipes.whereIn("recipeId", ids)
+                        .get()
+                        .addOnSuccessListener { qs ->
+                            liveRecipes.value = qs.documents
+                                .mapNotNull { it.toObject(Recipe::class.java) }
                         }
-                        favouritesLiveData.value = recipes
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e("FirebaseFavourite", "Error fetching favourite recipes", e)
-                        favouritesLiveData.value = emptyList()
-                    }
+                        .addOnFailureListener { e ->
+                            Log.e("FavRepo", "getUserFavourites: fetch recipes failed", e)
+                            liveRecipes.value = emptyList()
+                        }
+                }
             }
-
-        return favouritesLiveData
+        return liveRecipes
     }
 
-    // Delete favourites for a recipe
-    suspend fun deleteFavouritesByRecipeId(recipeId: Int): Boolean {
-        return try {
-            val querySnapshot = favouritesCollection
-                .whereEqualTo("recipeId", recipeId)
-                .get()
-                .await()
-
-            for (document in querySnapshot.documents) {
-                document.reference.delete().await()
-            }
-
-            true
-        } catch (e: Exception) {
-            Log.e("FirebaseFavourite", "Error deleting favourites for recipe", e)
-            false
-        }
+    // Delete all favourites for a given recipe
+    suspend fun deleteFavouritesByRecipeId(recipeId: Int): Boolean = try {
+        val qs = favourites.whereEqualTo("recipeId", recipeId).get().await()
+        qs.documents.forEach { it.reference.delete().await() }
+        true
+    } catch (e: Exception) {
+        Log.e("FavRepo", "deleteFavouritesByRecipeId failed", e)
+        false
     }
 
-    // Get recipe like counts
+    // Get like counts for all recipes
     fun getRecipeLikeCounts(): LiveData<List<RecipeLikeCount>> {
-        val likesLiveData = MutableLiveData<List<RecipeLikeCount>>()
-
-        favouritesCollection.addSnapshotListener { snapshot, error ->
-            if (error != null) {
-                Log.e("FirebaseFavourite", "Error fetching like counts", error)
-                return@addSnapshotListener
+        val liveCounts = MutableLiveData<List<RecipeLikeCount>>()
+        favourites
+            .addSnapshotListener { snap, err ->
+                if (err != null) {
+                    Log.e("FavRepo", "getRecipeLikeCounts error", err)
+                    return@addSnapshotListener
+                }
+                val allFavs = snap?.documents
+                    ?.mapNotNull { it.toObject(Favourite::class.java) }
+                    ?: emptyList()
+                val countMap = allFavs.groupingBy { it.recipeId }
+                    .eachCount()
+                    .map { RecipeLikeCount(recipeId = it.key, likeCount = it.value) }
+                liveCounts.value = countMap
             }
-
-            val likes = snapshot?.documents?.mapNotNull {
-                it.toObject(Favourite::class.java)
-            } ?: emptyList()
-
-            // Calculate counts by recipe ID
-            val likeCountMap = likes.groupBy { it.recipeId }
-                .mapValues { it.value.size }
-                .map { RecipeLikeCount(it.key, it.value) }
-
-            likesLiveData.value = likeCountMap
-        }
-
-        return likesLiveData
+        return liveCounts
     }
 }

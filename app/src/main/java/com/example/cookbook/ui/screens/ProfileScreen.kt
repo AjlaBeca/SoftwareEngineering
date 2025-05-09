@@ -1,6 +1,4 @@
 package com.example.cookbook.ui.screens
-
-import RecipeViewModel
 import android.content.Context
 import android.net.Uri
 import androidx.compose.foundation.Image
@@ -13,9 +11,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
@@ -33,6 +31,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.cookbook.R
 import com.example.cookbook.data.models.Favourite
 import com.example.cookbook.data.models.Recipe
+import com.example.cookbook.data.viewmodels.RecipeViewModel
 import com.example.cookbook.data.viewmodels.UserViewModel
 import com.example.cookbook.ui.theme.Gray
 import com.example.cookbook.ui.theme.LighterGray
@@ -40,7 +39,6 @@ import com.example.cookbook.ui.theme.Orange
 import com.example.cookbook.ui.theme.White
 import com.example.cookbook.utils.SharedPreferencesUtil
 import kotlinx.coroutines.launch
-
 
 @Composable
 fun ProfileScreen(
@@ -186,7 +184,9 @@ fun ProfileScreen(
 
             if (showUserRecipes) {
                 Spacer(modifier = Modifier.height(8.dp))
-                AddRecipeButton(navController = navController, modifier = Modifier.fillMaxWidth().height(62.dp))
+                AddRecipeButton(navController = navController, modifier = Modifier
+                    .fillMaxWidth()
+                    .height(62.dp))
             }
 
             if (filteredRecipes.isEmpty()) {
@@ -264,7 +264,7 @@ fun ProfileScreen(
                 .padding(16.dp)
         ) {
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                imageVector = Icons.Default.ExitToApp,
                 contentDescription = "Logout",
                 tint = MaterialTheme.colorScheme.error
             )

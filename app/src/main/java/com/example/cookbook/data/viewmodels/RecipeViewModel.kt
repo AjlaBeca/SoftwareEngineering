@@ -1,147 +1,145 @@
+// RecipeViewModel.kt
+package com.example.cookbook.data.viewmodels
+
 import android.app.Application
 import android.net.Uri
 import android.util.Log
-import androidx.lifecycle.ViewModelProvider
-import com.example.cookbook.data.dao.RecipeLikeCount
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.*
 import com.example.cookbook.data.models.Favourite
 import com.example.cookbook.data.models.Recipe
+import com.example.cookbook.data.models.RecipeLikeCount
 import com.example.cookbook.data.repositories.FirebaseFavouriteRepository
 import com.example.cookbook.data.repositories.FirebaseRecipeRepository
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 
 class RecipeViewModel(
-    private val recipeRepository: FirebaseRecipeRepository,
-    private val favouriteRepository: FirebaseFavouriteRepository
+    private val recipesRepo: FirebaseRecipeRepository,
+    private val favsRepo: FirebaseFavouriteRepository
 ) : ViewModel() {
-    val readAllData: LiveData<List<Recipe>> = recipeRepository.getAllRecipes()
 
-    val recipeLikeCounts: LiveData<List<RecipeLikeCount>> = favouriteRepository.getRecipeLikeCounts()
-    private val _isFavourite = MutableLiveData<Boolean>()
+    // All recipes
+    val allRecipes: LiveData<List<Recipe>> = recipesRepo.getAllRecipes()
 
-    fun fetchInitialFavouriteStatus(recipeId: Int, userId: Long) {
-        // The Firebase repository handles this with LiveData
-    }
+    private val db = FirebaseFirestore.getInstance()
+    private val _isFavouriteMap = mutableMapOf<Pair<Int, Long>, MutableLiveData<Boolean>>()
 
-    fun addFavourite(favourite: Favourite) {
-        viewModelScope.launch {
-            favouriteRepository.addFavourite(favourite)
-        }
-    }
+    // Like counts
+    val recipeLikeCounts: LiveData<List<RecipeLikeCount>> = favsRepo.getRecipeLikeCounts()
 
-    fun deleteFavourite(favourite: Favourite) {
-        viewModelScope.launch {
-            favouriteRepository.deleteFavourite(favourite)
-        }
-    }
+    // Expose filtered helpers
+    fun getRecipesByCategory(categoryId: Int): LiveData<List<Recipe>> =
+        recipesRepo.getRecipesByCategory(categoryId)
 
-    fun isFavourite(recipeId: Int, userId: Long): LiveData<Boolean> {
-        return favouriteRepository.isFavourite(recipeId, userId)
-    }
+    fun getAllRecipes(): LiveData<List<Recipe>> = allRecipes
 
-    fun getUserFavourites(userId: Long): LiveData<List<Recipe>> {
-        return favouriteRepository.getUserFavourites(userId)
-    }
-
-    fun getRecipesByCategory(categoryId: Int): LiveData<List<Recipe>> {
-        return recipeRepository.getRecipesByCategory(categoryId)
-    }
-
-    fun getRecipesByUser(userId: Long): LiveData<List<Recipe>> {
-        return recipeRepository.getRecipesByUser(userId)
-    }
-
-    fun getAllRecipes(): LiveData<List<Recipe>> {
-        return recipeRepository.getAllRecipes()
-    }
-
-    var recipeName by mutableStateOf("")
+    // Mutable state for form fields
+    var recipeName         by mutableStateOf("")
         private set
     var recipeInstructions by mutableStateOf("")
         private set
-    var recipeIngredients by mutableStateOf("")
+    var recipeIngredients  by mutableStateOf("")
         private set
-    var recipeTime by mutableStateOf("")
+    var recipeTime         by mutableStateOf("")
         private set
-    var recipeComplexity by mutableStateOf("Beginner")
+    var recipeComplexity   by mutableStateOf("Beginner")
         private set
-    var recipeServings by mutableStateOf(1)
+    var recipeServings     by mutableStateOf(1)
         private set
-    var recipeAuthorId by mutableStateOf(1)
+    var recipeImageUri     by mutableStateOf<Uri?>(null)
         private set
-    var recipeImageUri by mutableStateOf<Uri?>(null)
-        private set
-    var recipeCategoryId by mutableStateOf(1)
+    var recipeCategoryId   by mutableStateOf(1)
         private set
 
-    fun onRecipeNameChange(newName: String) {
-        recipeName = newName
-    }
+    // Field updates
+    fun onRecipeNameChange(v: String)         { recipeName = v }
+    fun onRecipeInstructionsChange(v: String) { recipeInstructions = v }
+    fun onRecipeIngredientsChange(v: String)  { recipeIngredients = v }
+    fun onRecipeTimeChange(v: String)         { recipeTime = v }
+    fun onRecipeComplexityChange(v: String)   { recipeComplexity = v }
+    fun onRecipeServingsChange(v: Int)        { recipeServings = v }
+    fun onImageUriChange(v: Uri?)             { recipeImageUri = v }
+    fun onCategoryIdChange(v: Int)            { recipeCategoryId = v }
 
-    fun onRecipeInstructionsChange(newInstructions: String) {
-        recipeInstructions = newInstructions
-    }
-
-    fun onRecipeIngredientsChange(newIngredients: String) {
-        recipeIngredients = newIngredients
-    }
-
-    fun onRecipeTimeChange(newTime: String) {
-        recipeTime = newTime
-    }
-
-    fun onRecipeComplexityChange(newComplexity: String) {
-        recipeComplexity = newComplexity
-    }
-
-    fun onRecipeServingsChange(newServings: Int) {
-        recipeServings = newServings
-    }
-
-    fun onImageUriChange(newUri: Uri?) {
-        recipeImageUri = newUri
-    }
-
-    fun onRecipeCategoryIdChange(newCategoryId: Int) {
-        recipeCategoryId = newCategoryId
-    }
-
+    // Validate
     fun isValidRecipe(): Boolean {
-        Log.d("RecipeViewModel", "Checking if recipe is valid...")
-        val isValid =
-            recipeName.isNotBlank() && recipeInstructions.isNotBlank() && recipeIngredients.isNotBlank()
-        Log.d("RecipeViewModel", "Recipe is valid: $isValid")
-        return isValid
+        val ok = recipeName.isNotBlank()
+                && recipeInstructions.isNotBlank()
+                && recipeIngredients.isNotBlank()
+        Log.d("RecipeVM", "Valid: $ok")
+        return ok
     }
 
+    // Add a new recipe
     fun addRecipe(authorId: Long) {
-        val newRecipe = Recipe(
-            name = recipeName,
-            instructions = recipeInstructions,
+        val r = Recipe(
+            name        = recipeName,
+            instructions= recipeInstructions,
             ingredients = recipeIngredients,
-            time = recipeTime,
-            complexity = recipeComplexity,
-            servings = recipeServings,
-            authorId = authorId,
-            categoryId = recipeCategoryId,
-            imagePath = null // Will be set by the repository
+            time        = recipeTime,
+            complexity  = recipeComplexity,
+            servings    = recipeServings,
+            authorId    = authorId,
+            categoryId  = recipeCategoryId,
+            imagePath   = null
         )
-
         viewModelScope.launch {
-            try {
-                recipeRepository.addRecipe(newRecipe, recipeImageUri)
-                resetFields()
-            } catch (e: Exception) {
-                Log.e("RecipeViewModel", "Error adding recipe: ${e.message}")
-            }
+            recipesRepo.addRecipe(r, recipeImageUri)
+            resetFields()
         }
     }
 
+    // Delete a recipe (and its favourites)
     fun deleteRecipe(recipeId: Int) {
         viewModelScope.launch {
-            recipeRepository.deleteRecipe(recipeId)
-            favouriteRepository.deleteFavouritesByRecipeId(recipeId)
+            recipesRepo.deleteRecipe(recipeId)
+            favsRepo.deleteFavouritesByRecipeId(recipeId)
         }
     }
+
+    // Favourite operations
+    fun addFavourite(fav: Favourite) = viewModelScope.launch {
+        favsRepo.addFavourite(fav)
+    }
+    fun deleteFavourite(fav: Favourite) = viewModelScope.launch {
+        favsRepo.deleteFavourite(fav)
+    }
+    fun isFavourite(recipeId: Int, userId: Long): LiveData<Boolean> =
+        favsRepo.isFavourite(recipeId, userId)
+
+    fun getUserFavourites(userId: Long): LiveData<List<Recipe>> =
+        favsRepo.getUserFavourites(userId)
+
+    fun getRecipesByUser(userId: Long): LiveData<List<Recipe>> =
+        recipesRepo.getRecipesByUser(userId)
+
+    fun fetchInitialFavouriteStatus(recipeId: Int, userId: Long): LiveData<Boolean> {
+        val key = Pair(recipeId, userId)
+
+        val existingLiveData = _isFavouriteMap[key]
+        if (existingLiveData != null) return existingLiveData
+
+        val liveData = MutableLiveData<Boolean>()
+        _isFavouriteMap[key] = liveData
+
+        db.collection("favourites")
+            .whereEqualTo("recipeId", recipeId)
+            .whereEqualTo("userId", userId)
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                val isFav = !querySnapshot.isEmpty
+                liveData.postValue(isFav)
+            }
+            .addOnFailureListener {
+                liveData.postValue(false)
+            }
+
+        return liveData
+    }
+
 
     private fun resetFields() {
         recipeName = ""
@@ -150,20 +148,20 @@ class RecipeViewModel(
         recipeTime = ""
         recipeComplexity = "Beginner"
         recipeServings = 1
-        recipeAuthorId = 1
         recipeImageUri = null
         recipeCategoryId = 1
     }
 
-    class RecipeViewModelFactory(private val application: Application) : ViewModelProvider.Factory {
+    class RecipeViewModelFactory(private val app: Application) :
+        ViewModelProvider.AndroidViewModelFactory(app) {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(RecipeViewModel::class.java)) {
-                val recipeRepository = FirebaseRecipeRepository()
-                val favouriteRepository = FirebaseFavouriteRepository()
+                val repo = FirebaseRecipeRepository()
+                val favs = FirebaseFavouriteRepository()
                 @Suppress("UNCHECKED_CAST")
-                return RecipeViewModel(recipeRepository, favouriteRepository) as T
+                return RecipeViewModel(repo, favs) as T
             }
-            throw IllegalArgumentException("Unknown ViewModel class")
+            return super.create(modelClass)
         }
     }
 }

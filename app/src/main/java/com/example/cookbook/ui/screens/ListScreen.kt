@@ -1,7 +1,5 @@
 package com.example.cookbook.ui.screens
 
-import RecipeViewModel
-import android.content.res.Resources
 import android.net.Uri
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -9,14 +7,10 @@ import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.navigation.NavHostController
-import com.example.cookbook.data.models.Recipe
 import com.example.cookbook.ui.theme.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+//import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
@@ -29,7 +23,6 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -40,19 +33,36 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.*
-import androidx.lifecycle.LiveData
 import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
+import android.content.res.Resources
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.*
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.*
+import androidx.lifecycle.LiveData
+import androidx.navigation.NavHostController
+import coil.compose.rememberAsyncImagePainter
 import com.example.cookbook.R
-import com.example.cookbook.data.dao.RecipeLikeCount
 import com.example.cookbook.data.models.Favourite
+import com.example.cookbook.data.models.Recipe
+import com.example.cookbook.data.models.RecipeLikeCount
 import com.example.cookbook.data.models.User
+import com.example.cookbook.data.viewmodels.RecipeViewModel
 import com.example.cookbook.data.viewmodels.UserViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -66,174 +76,99 @@ fun ListScreen(
 ) {
     val categories = mapOf("Breakfast" to 1, "Lunch" to 2, "Dinner" to 3, "Dessert" to 4)
     val categoryId = category?.let { categories[it] }
-    val allRecipes by (categoryId?.let { recipeViewModel.getRecipesByCategory(it) }
-        ?: recipeViewModel.getAllRecipes()).observeAsState(listOf())
-    var searchText by remember { mutableStateOf("") }
-    var isSearchFocused by remember { mutableStateOf(false) }
-    val focusRequester = remember { FocusRequester() }
-    val focusManager = LocalFocusManager.current
 
+    // Observe either filtered or all recipes
+    val recipesSource: LiveData<List<Recipe>> =
+        categoryId?.let { recipeViewModel.getRecipesByCategory(it) }
+            ?: recipeViewModel.getAllRecipes()
+    val allRecipes by recipesSource.observeAsState(emptyList())
+
+    var searchText by remember { mutableStateOf("") }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var recipeToDelete by remember { mutableStateOf<Recipe?>(null) }
-    val recipeLikeCounts by recipeViewModel.recipeLikeCounts.observeAsState(listOf())
 
-    val filteredRecipes = allRecipes.filter { recipe ->
-        searchText.isEmpty() || recipe.name.contains(searchText, ignoreCase = true)
-    }.filterNot { recipe ->
-        recipe.authorId == userId
-    }
+    val recipeLikeCounts by recipeViewModel.recipeLikeCounts.observeAsState(emptyList())
 
-    LaunchedEffect(key1 = userId) {
-        filteredRecipes.forEach { recipe ->
-            recipeViewModel.fetchInitialFavouriteStatus(recipe.recipeId ?: 0, userId)
+    // Filter out user's own and match search
+    val filteredRecipes = allRecipes
+        .filter { it.authorId != userId }
+        .filter { it.name.contains(searchText, ignoreCase = true) }
+
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        // Back arrow if in category
+        if (category != null) {
+            IconButton(onClick = { navController.popBackStack() }) {
+                Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+            }
         }
-    }
 
-    Spacer(modifier = Modifier.height(30.dp))
+        OutlinedTextField(
+            value = searchText,
+            onValueChange = { searchText = it },
+            label = { Text("Search") },
+            modifier = Modifier.fillMaxWidth()
+        )
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
+        Spacer(Modifier.height(8.dp))
+
+        LazyColumn(
+            contentPadding = PaddingValues(8.dp),
+            modifier = Modifier.weight(1f)
         ) {
-            // Show back button only if a category is specified
-            if (category != null) {
-                IconButton(
-                    onClick = { navController.popBackStack() },
-                    modifier = Modifier.align(Alignment.Start)
+            items(filteredRecipes.chunked(2)) { rowRecipes ->
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        tint = MaterialTheme.colorScheme.secondary
-                    )
-                }
-            }
-
-            OutlinedTextField(
-                value = searchText,
-                onValueChange = { searchText = it },
-                label = { Text("Search", color = MaterialTheme.colorScheme.secondary) },
-                shape = MaterialTheme.shapes.medium,
-                trailingIcon = {
-                    if (isSearchFocused || searchText.isNotEmpty()) {
-                        IconButton(
-                            onClick = {
-                                searchText = ""
-                                isSearchFocused = false
-                                focusManager.clearFocus() // Clear focus here
-                            }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Clear search"
-                            )
-                        }
+                    rowRecipes.forEach { recipe: Recipe ->
+                        val isFavLD = recipeViewModel.isFavourite(recipe.recipeId ?: 0, userId)
+                        RecipeItem(
+                            recipe = recipe,
+                            navController = navController,
+                            modifier = Modifier.weight(1f),
+                            recipeViewModel = recipeViewModel,
+                            userViewModel = userViewModel,
+                            userId = userId,
+                            isFavourite = isFavLD,
+                            onFavouriteClicked = {
+                                val rid = recipe.recipeId ?: 0
+                                val fav = Favourite(recipeId = rid, userId = userId)
+                                if (isFavLD.value == true)
+                                    recipeViewModel.deleteFavourite(fav)
+                                else
+                                    recipeViewModel.addFavourite(fav)
+                            },
+                            onDeleteClicked = {
+                                showDeleteDialog = true
+                                recipeToDelete = recipe
+                            },
+                            isUserRecipe = false,
+                            recipeLikeCounts = recipeLikeCounts
+                        )
                     }
-                },
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    cursorColor = MaterialTheme.colorScheme.secondary,
-                    focusedBorderColor = MaterialTheme.colorScheme.tertiary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.tertiary,
-                    focusedLabelColor = MaterialTheme.colorScheme.tertiary,
-                    unfocusedLabelColor = MaterialTheme.colorScheme.tertiary
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp, horizontal = 8.dp)
-                    .focusRequester(focusRequester)
-                    .onFocusChanged { focusState ->
-                        isSearchFocused = focusState.isFocused
-                    }
-            )
-
-            LazyColumn(
-                contentPadding = PaddingValues(8.dp),
-                modifier = Modifier.weight(1f)
-            ) {
-                items(filteredRecipes.chunked(2)) { rowRecipes ->
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        rowRecipes.forEach { recipe ->
-                            val isFavouriteLiveData =
-                                recipeViewModel.isFavourite(recipe.recipeId ?: 0, userId)
-                            RecipeItem(
-                                recipe = recipe,
-                                navController = navController,
-                                modifier = Modifier.weight(1f),
-                                recipeViewModel = recipeViewModel,
-                                userViewModel = userViewModel,
-                                userId = userId,
-                                isFavourite = isFavouriteLiveData,
-                                onFavouriteClicked = {
-                                    val recipeId = recipe.recipeId ?: 0
-                                    val isFav = isFavouriteLiveData.value ?: false
-
-                                    if (isFav) {
-                                        recipeViewModel.deleteFavourite(
-                                            Favourite(
-                                                recipeId = recipeId,
-                                                userId = userId
-                                            )
-                                        )
-                                    } else {
-                                        recipeViewModel.addFavourite(
-                                            Favourite(
-                                                recipeId = recipeId,
-                                                userId = userId
-                                            )
-                                        )
-                                    }
-                                },
-                                onDeleteClicked = {
-                                    showDeleteDialog = true
-                                    recipeToDelete = recipe
-                                },
-                                isUserRecipe = false,
-                                recipeLikeCounts = recipeLikeCounts
-                            )
-                        }
-                        if (rowRecipes.size < 2) {
-                            Spacer(modifier = Modifier.weight(1f))
-                        }
-                    }
-                }
-            }
-
-            if (filteredRecipes.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "No recipes found.",
-                        color = MaterialTheme.colorScheme.secondary,
-                        textAlign = TextAlign.Center
-                    )
+                    if (rowRecipes.size < 2) Spacer(Modifier.weight(1f))
                 }
             }
         }
 
-        if (showDeleteDialog) {
-            showDialog(
-                onConfirm = {
-                    recipeToDelete?.let { recipe ->
-                        recipeViewModel.deleteRecipe(recipe.recipeId ?: 0)
-                    }
-                    showDeleteDialog = false
-                },
-                onDismiss = { showDeleteDialog = false }
-            )
+        if (filteredRecipes.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("No recipes found.", textAlign = TextAlign.Center)
+            }
         }
+    }
+
+    if (showDeleteDialog) {
+        showDialog(
+            onConfirm = {
+                recipeToDelete?.recipeId?.let { recipeViewModel.deleteRecipe(it) }
+                showDeleteDialog = false
+            },
+            onDismiss = { showDeleteDialog = false }
+        )
     }
 }
+
 
 @Composable
 fun RecipeItem(

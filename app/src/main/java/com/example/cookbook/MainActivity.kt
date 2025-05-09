@@ -1,6 +1,5 @@
 package com.example.cookbook
 
-import RecipeViewModel
 import android.content.Context
 import android.os.Bundle
 import android.util.Log
@@ -9,8 +8,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,6 +17,8 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -27,12 +28,13 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.cookbook.data.models.Recipe
+import com.example.cookbook.data.viewmodels.RecipeViewModel
 import com.example.cookbook.data.viewmodels.UserViewModel
 import com.example.cookbook.ui.screens.*
 import com.example.cookbook.ui.theme.CookBookTheme
-import com.example.cookbook.utils.RoomToFirebaseMigrator
 import com.example.cookbook.utils.SharedPreferencesUtil
 import com.google.firebase.FirebaseApp
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private val TAG = "MainActivity"
@@ -45,46 +47,21 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Initialize Firebase
+        FirebaseApp.initializeApp(this)
+
         Log.d(TAG, "onCreate: UserViewModel initialized successfully")
         setContent {
             CookBookApp(userViewModel, recipeViewModel)
         }
     }
 }
-override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
-
-    // Initialize Firebase
-    FirebaseApp.initializeApp(this)
-
-    // Check if migration is needed
-    val sharedPrefs = getSharedPreferences("migration_prefs", Context.MODE_PRIVATE)
-    val migrationCompleted = sharedPrefs.getBoolean("firebase_migration_completed", false)
-
-    if (!migrationCompleted) {
-        lifecycleScope.launch {
-            val migrator = RoomToFirebaseMigrator(applicationContext)
-            try {
-                migrator.migrateAllData()
-                // Mark migration as completed
-                sharedPrefs.edit().putBoolean("firebase_migration_completed", true).apply()
-            } catch (e: Exception) {
-                Log.e(TAG, "Migration failed", e)
-            }
-        }
-    }
-
-    Log.d(TAG, "onCreate: UserViewModel initialized successfully")
-    setContent {
-        CookBookApp(userViewModel, recipeViewModel)
-    }
-}
-
 @Composable
 fun CookBookApp(userViewModel: UserViewModel, recipeViewModel: RecipeViewModel) {
     val navController = rememberNavController()
-    val recipeList by recipeViewModel.readAllData.observeAsState(initial = emptyList())
     val isLoggedIn by userViewModel.isLoggedIn.observeAsState(initial = false)
+    val recipeList by recipeViewModel.allRecipes.observeAsState(initial = emptyList())
 
     CookBookTheme {
         // Restore the current user ID if logged in
@@ -111,6 +88,7 @@ fun CookBookApp(userViewModel: UserViewModel, recipeViewModel: RecipeViewModel) 
         MyApp(navController, userViewModel, recipeViewModel, recipeList, isLoggedIn)
     }
 }
+
 
 @Composable
 fun MyApp(
@@ -214,9 +192,7 @@ fun BottomNavigationBar(navController: NavHostController) {
         contentColor = Color.Transparent
     ) {
         NavigationBar(containerColor = Color.Transparent) {
-
-            val secondaryColor =
-                MaterialTheme.colorScheme.secondary
+            val secondaryColor = MaterialTheme.colorScheme.secondary
 
             NavigationBarItem(
                 icon = {
@@ -229,36 +205,31 @@ fun BottomNavigationBar(navController: NavHostController) {
                 label = { Text("Home") },
                 selected = currentRoute(navController) == "home",
                 onClick = { navigateTo(navController, "home") },
-                colors = NavigationBarItemColors(
+                colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = MaterialTheme.colorScheme.primaryContainer,
                     selectedTextColor = MaterialTheme.colorScheme.secondary,
-                    selectedIndicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
                     unselectedIconColor = Color.DarkGray,
-                    unselectedTextColor = MaterialTheme.colorScheme.secondary,
-                    disabledIconColor = Color.DarkGray,
-                    disabledTextColor = MaterialTheme.colorScheme.secondary
+                    unselectedTextColor = MaterialTheme.colorScheme.secondary
                 )
             )
             NavigationBarItem(
                 icon = {
                     Icon(
-                        Icons.AutoMirrored.Filled.List,
+                        Icons.Default.List,
                         contentDescription = "List",
                         tint = secondaryColor
                     )
                 },
                 label = { Text("List") },
                 selected = currentRoute(navController) == "list",
-                onClick = { navigateTo(navController, "list")
-                },
-                colors = NavigationBarItemColors(
+                onClick = { navigateTo(navController, "list") },
+                colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = MaterialTheme.colorScheme.primaryContainer,
                     selectedTextColor = MaterialTheme.colorScheme.secondary,
-                    selectedIndicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
                     unselectedIconColor = Color.DarkGray,
-                    unselectedTextColor = MaterialTheme.colorScheme.secondary,
-                    disabledIconColor = Color.DarkGray,
-                    disabledTextColor = MaterialTheme.colorScheme.secondary
+                    unselectedTextColor = MaterialTheme.colorScheme.secondary
                 )
             )
             NavigationBarItem(
@@ -272,14 +243,12 @@ fun BottomNavigationBar(navController: NavHostController) {
                 label = { Text("Profile") },
                 selected = currentRoute(navController) == "profile",
                 onClick = { navigateTo(navController, "profile") },
-                colors = NavigationBarItemColors(
+                colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = MaterialTheme.colorScheme.primaryContainer,
                     selectedTextColor = MaterialTheme.colorScheme.secondary,
-                    selectedIndicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
                     unselectedIconColor = Color.DarkGray,
-                    unselectedTextColor = MaterialTheme.colorScheme.secondary,
-                    disabledIconColor = Color.DarkGray,
-                    disabledTextColor = MaterialTheme.colorScheme.secondary
+                    unselectedTextColor = MaterialTheme.colorScheme.secondary
                 )
             )
         }
