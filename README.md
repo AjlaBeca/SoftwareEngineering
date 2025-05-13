@@ -28,4 +28,3 @@ https://www.figma.com/design/uuX5TJaHOLyN4HTo35Lj6A/Untitled?node-id=0-1&t=SBCqy
 🤝 Team & Contributors
 - Ajla Beća
 - Selma Salman
-- Faris Selimović
